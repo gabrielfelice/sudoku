@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "next": "^13.1.6",
+    "prettier": "^3.8.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "name": "y",
+  "version": "1.0.0",
+  "description": "Projeto pra criar um aplicativo decente de sudoku",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev"
+  },
+  "author": "",
+  "license": "MIT"
+}
