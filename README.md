@@ -1,6 +1,6 @@
-# Sudoku MVP - Milestone A
+# Sudoku MVP - Milestone B
 
-Jogo de Sudoku jogável implementado com Next.js (App Router), TypeScript, Tailwind CSS e Zustand.
+Jogo de Sudoku completo implementado com Next.js (App Router), TypeScript, Tailwind CSS e Zustand.
 
 ## Estrutura do Projeto
 
@@ -17,14 +17,18 @@ src/
 │   └── store.ts     # Store Zustand
 ├── lib/             # Utilitários
 │   ├── puzzles.ts   # Puzzle hardcoded para MVP
-│   └── time.ts      # Formatação de tempo
+│   ├── time.ts      # Formatação de tempo
+│   └── storage.ts   # Persistência localStorage (NOVO)
 ├── components/      # Componentes React
 │   ├── TopBar.tsx
 │   ├── SudokuBoard.tsx
 │   ├── SudokuCell.tsx
 │   ├── ActionBar.tsx
 │   ├── Keypad.tsx
-│   └── PauseOverlay.tsx
+│   ├── PauseOverlay.tsx
+│   ├── Toast.tsx              # Toast notifications (NOVO)
+│   ├── ContinueGameModal.tsx  # Modal continuar/novo jogo (NOVO)
+│   └── KeyboardController.tsx # Controles de teclado (NOVO)
 └── app/             # Next.js App Router
     ├── layout.tsx
     ├── page.tsx
@@ -33,46 +37,82 @@ src/
 
 ## Funcionalidades Implementadas
 
-### Layout
+### Milestone A (Base)
 
-- **TopBar**: Contador de erros, cronômetro (mm:ss), botão Pause/Retomar
-- **Tabuleiro**: Grid 9x9 com bordas mais grossas nas divisões de blocos 3x3
-- **ActionBar**: Borracha, Desfazer, Anotação (toggle), Investigador (toggle), Dica (placeholder)
-- **Keypad**: Números 1-9 (oculta números que aparecem 9 vezes no tabuleiro)
+- **Layout**: TopBar, Tabuleiro 9x9, ActionBar, Keypad
+- **Interação**: Seleção, Modo Resposta, Modo Anotação, Modo Investigador
+- **Visual/UX**: Cores de células, destaque de peers, same-number highlight
+- **Ações**: Borracha, Desfazer, Pause/Retomar
 
-### Interação
+### Milestone B (Novo) ✨
 
-- **Seleção**: Clique na célula para selecionar
-- **Modo Resposta**: Clique no número do keypad para inserir resposta
-- **Modo Anotação**: Toggle ativo + clique no número para alternar nota
-- **Modo Investigador**: Navegação sem alterações (keypad desabilitado)
-- **Células Given**: Imutáveis (pré-preenchidas)
-- **Auto-lock**: Respostas corretas travam a célula
-- **Validação**: Respostas erradas incrementam contador de erros
-- **Auto-remove notas**: Quando acerta, remove o dígito das notas dos peers
+#### 1. Persistência Local e Retomar Jogo
 
-### Visual/UX
+- **Auto-save**: Estado do jogo salvo automaticamente no localStorage (debounced 500ms)
+- **Schema versioning**: Validação de versão do save (schemaVersion)
+- **Continuar ou Novo Jogo**: Modal ao abrir a página se existir jogo salvo
+- **Dados salvos**: puzzle, values, meta, mistakes, elapsedMs
+- **Fallback seguro**: Se versão incompatível, limpa save antigo
 
-- **Cores de células**:
-  - Selecionada: azul escuro (bg-blue-200)
-  - Peers: azul claro (bg-blue-50)
-  - Demais: branco
-- **Cores de números**:
-  - Given: preto negrito
-  - Correto: azul (text-blue-600)
-  - Errado: vermelho (text-red-600)
-- **Notas**: Mini-grade 3x3 dentro da célula vazia
-- **Destaque same-number**: Ring roxo em células com mesmo número
-- **Notas destacadas**: Negrito roxo em notas que correspondem ao número selecionado
-- **Pause**: Overlay escuro cobrindo o tabuleiro
+#### 2. Controles por Teclado (Desktop)
 
-### Ações
+Quando uma célula estiver selecionada:
 
-- **Borracha**: Apaga todas as notas da célula selecionada
-- **Desfazer**: Reverte última ação (com patches, não snapshot completo)
-- **Anotação**: Toggle com badge "ANOTAR" quando ativo
-- **Investigador**: Toggle com badge "INVESTIGAR" quando ativo
-- **Dica**: Placeholder (alert) para Milestone C
+- **Dígitos 1-9**: Inserir resposta (answer mode) ou alternar nota (note mode)
+- **Backspace/Delete**: Limpar célula (mantém notas)
+- **Setas (↑↓←→)**: Mover seleção com wrap
+- **N**: Toggle modo anotação
+- **I**: Toggle modo investigador
+- **U ou Ctrl+Z**: Desfazer
+- **Esc**: Sair de modo especial → limpar seleção
+
+**Regras de segurança**:
+
+- Teclado desabilitado quando paused
+- Não permite alterar células locked ou given
+- Modo inspect bloqueia input de dígitos
+
+#### 3. Limpar Célula
+
+- **Ação CLEAR_CELL**: Apaga valor da célula selecionada
+- **Mantém notas**: Notas não são removidas ao limpar
+- **Botão "Limpar"**: Disponível no ActionBar (vermelho)
+- **Atalho**: Backspace ou Delete
+- **Undo suportado**: Pode desfazer clear
+
+#### 4. Melhorias de UI/Clareza dos Modos
+
+- **Badge de modo grande**: "MODO: RESPONDER / ANOTAR / INVESTIGAR" sempre visível
+- **Botões com estado pressed**: Ring colorido quando modo ativo
+  - Responder: azul
+  - Anotar: verde
+  - Investigar: amarelo
+- **Borda da célula por modo**: Ring colorido na célula selecionada
+  - Answer: ring-4 ring-blue-500
+  - Note: ring-4 ring-green-500
+  - Inspect: ring-4 ring-yellow-500
+- **Ícone de cadeado**: Células locked (não given) mostram 🔒 discreto
+- **Tooltips**: Todos os botões têm title com atalhos de teclado
+
+#### 5. Acessibilidade e Responsividade
+
+- **ARIA roles**: Board com role="grid", células com role="gridcell"
+- **ARIA labels**: Células com aria-label descritivo
+- **Foco navegável**: Indicação visual de foco
+- **Toast não-intrusivo**: Substituiu alert() por componente Toast
+- **Responsivo**: Layout flex-wrap para mobile
+- **Semântica**: Uso de `<button>` com labels apropriados
+
+#### 6. Sistema de Toast
+
+- **Componente Toast**: Notificações não-intrusivas
+- **Tipos**: info, success, warning, error (cores diferentes)
+- **Auto-dismiss**: Desaparece após 3s com animação
+- **Posição**: Fixed top-center
+- **Exemplos**:
+  - "Jogo retomado!" (success)
+  - "Novo jogo iniciado!" (success)
+  - "Dica: implementar no Milestone C" (info)
 
 ## Como Executar
 
@@ -98,57 +138,101 @@ npm run lint:check  # Verificar formatação
 npm run lint:fix    # Corrigir formatação
 ```
 
-## Fluxo de Teste Manual
+## Fluxo de Teste Manual - Milestone B
 
-1. **Iniciar o jogo**: Abra http://localhost:3000
-   - Deve aparecer um tabuleiro com números pré-preenchidos (pretos)
-   - Cronômetro deve estar rodando
-   - Contador de erros em 0
+### 1. Persistência e Retomar
 
-2. **Selecionar célula vazia**: Clique em uma célula vazia
-   - Célula fica azul escuro
-   - Células da mesma linha/coluna/bloco ficam azul claro
+1. **Primeiro acesso**: Abra http://localhost:3000
+   - Deve iniciar jogo normalmente (sem modal)
 
-3. **Inserir resposta correta**: Com célula selecionada, clique em um número correto no keypad
-   - Número aparece em azul
-   - Célula trava (não pode mais alterar)
-   - Notas dos peers são removidas automaticamente
+2. **Jogar um pouco**: Preencha algumas células, faça anotações
+   - Estado é salvo automaticamente (debounced 500ms)
 
-4. **Inserir resposta errada**: Clique em um número incorreto
-   - Número aparece em vermelho
-   - Contador de erros incrementa
+3. **Recarregar página**: F5 ou fechar e reabrir
+   - Modal "Jogo Salvo Encontrado" aparece
+   - Opções: "Continuar" ou "Novo Jogo"
 
-5. **Modo Anotação**: Clique no botão "Anotação"
-   - Botão fica verde com badge "ANOTAR"
-   - Clique em números para alternar notas na célula selecionada
-   - Notas aparecem em mini-grade 3x3
+4. **Continuar**: Clique "Continuar"
+   - Estado volta exatamente como estava
+   - Timer continua do ponto anterior
+   - Erros preservados
+   - Toast "Jogo retomado!" aparece
 
-6. **Modo Investigador**: Clique no botão "Investigador"
-   - Botão fica amarelo com badge "INVESTIGAR"
-   - Keypad e ações ficam desabilitados
-   - Pode navegar e selecionar células sem alterar
+5. **Novo Jogo**: Clique "Novo Jogo"
+   - Tabuleiro reseta
+   - Timer volta a 00:00
+   - Erros zerados
+   - Toast "Novo jogo iniciado!" aparece
 
-7. **Destaque same-number**: Selecione uma célula preenchida
-   - Todas as células com o mesmo número ganham ring roxo
-   - Notas com esse número ficam em negrito roxo
+### 2. Controles de Teclado
 
-8. **Borracha**: Selecione célula com notas e clique "Borracha"
-   - Todas as notas da célula são apagadas
+1. **Selecionar célula**: Clique em uma célula vazia
 
-9. **Desfazer**: Faça algumas ações e clique "Desfazer"
-   - Última ação é revertida
-   - Contador de erros ajusta se necessário
+2. **Digitar número**: Pressione tecla 1-9
+   - Número inserido como resposta (modo answer)
 
-10. **Pausar**: Clique "Pausar"
-    - Cronômetro para
-    - Overlay escuro cobre o tabuleiro
-    - Clique "Retomar" para continuar
+3. **Modo anotação**: Pressione N
+   - Badge muda para "MODO: ANOTAR"
+   - Borda da célula fica verde
+   - Pressione 1-9 para alternar notas
 
-11. **Keypad dinâmico**: Preencha 9 células com o mesmo número
-    - Esse número desaparece do keypad
+4. **Navegar com setas**: Use ↑↓←→
+   - Seleção move entre células com wrap
 
-12. **Dica**: Clique "Dica"
-    - Alert com mensagem placeholder
+5. **Limpar célula**: Pressione Backspace ou Delete
+   - Valor apagado, notas mantidas
+
+6. **Desfazer**: Pressione U ou Ctrl+Z
+   - Última ação revertida
+
+7. **Modo investigador**: Pressione I
+   - Badge muda para "MODO: INVESTIGAR"
+   - Borda amarela
+   - Dígitos não funcionam
+
+8. **Sair de modo**: Pressione Esc
+   - Volta para modo answer
+   - Pressione Esc novamente para limpar seleção
+
+### 3. Botão Limpar
+
+1. **Selecionar célula preenchida**: Clique em célula com número errado
+
+2. **Limpar**: Clique botão "Limpar" (vermelho)
+   - Número removido
+   - Notas preservadas
+
+3. **Desfazer**: Clique "Desfazer"
+   - Número volta
+
+### 4. Clareza Visual dos Modos
+
+1. **Badge de modo**: Sempre visível acima dos botões
+   - Azul: MODO: RESPONDER
+   - Verde: MODO: ANOTAR
+   - Amarelo: MODO: INVESTIGAR
+
+2. **Botões com ring**: Modo ativo tem ring colorido
+
+3. **Borda da célula**: Cor muda conforme modo
+
+4. **Ícone de cadeado**: Células corretas mostram 🔒 no canto
+
+### 5. Botão Novo Jogo
+
+1. **Durante o jogo**: Clique "Novo Jogo" (laranja)
+   - Tabuleiro reseta
+   - Toast "Novo jogo iniciado!"
+   - Save anterior é limpo
+
+### 6. Toast Notifications
+
+1. **Dica**: Clique "Dica"
+   - Toast azul: "Dica: implementar no Milestone C"
+   - Desaparece após 3s
+
+2. **Novo jogo**: Clique "Novo Jogo"
+   - Toast verde: "Novo jogo iniciado!"
 
 ## Tecnologias
 
@@ -157,12 +241,124 @@ npm run lint:fix    # Corrigir formatação
 - **Tailwind CSS** (estilização)
 - **Zustand** (gerenciamento de estado)
 - **React 18**
+- **localStorage** (persistência)
 
-## Próximos Passos (Milestone B/C)
+## Arquitetura de Estado
+
+### Ações Novas (Milestone B)
+
+```typescript
+| { type: "CLEAR_CELL" }
+| { type: "NEW_GAME"; given: CellValue[]; solution: CellValue[] }
+| { type: "LOAD_SAVED_GAME"; given; solution; values; meta; mistakes; elapsedMs }
+| { type: "SET_TOAST"; message: string; toastType: "info" | "success" | "warning" | "error" }
+| { type: "CLEAR_TOAST" }
+```
+
+### Estado Novo
+
+```typescript
+interface GameState {
+  // ... campos existentes
+  toast: ToastState | null; // NOVO
+}
+
+interface ToastState {
+  message: string;
+  type: "info" | "success" | "warning" | "error";
+}
+```
+
+### Storage
+
+```typescript
+interface SavedGame {
+  schemaVersion: number;
+  timestamp: number;
+  puzzle: { given; solution };
+  state: { values; meta; mistakes; elapsedMs };
+}
+```
+
+## Decisões de Design
+
+### 1. Limpar vs Borracha
+
+- **Limpar (Backspace/Delete)**: Remove valor, mantém notas
+- **Borracha**: Remove todas as notas, mantém valor
+
+### 2. Persistência
+
+- **Debounce 500ms**: Evita writes excessivos
+- **Schema versioning**: Permite migração futura
+- **Validação**: Estrutura validada ao carregar
+
+### 3. Keyboard UX
+
+- **Wrap nas setas**: Facilita navegação
+- **Esc duplo**: Primeiro sai de modo, depois limpa seleção
+- **Segurança**: Respeita locked/given/paused
+
+### 4. Toast vs Alert
+
+- **Toast**: Não bloqueia UI, melhor UX
+- **Auto-dismiss**: Usuário não precisa fechar
+- **Tipos visuais**: Cor indica severidade
+
+## Próximos Passos (Milestone C)
 
 - Geração de puzzles
 - Dificuldades (easy/medium/hard)
 - Dica real (revelar célula)
-- Persistência local
-- Treinamento/perfil
-- Live conflict highlight (opcional)
+- Estatísticas e perfil
+- Live conflict highlight
+- Temas visuais
+
+## Critérios de Aceitação ✅
+
+- [x] Recarregar página oferece continuar e estado volta idêntico
+- [x] Teclado funciona com segurança (respeita locked/given/paused/inspect)
+- [x] Undo cobre: answer, note toggle, erase notes, clear cell
+- [x] UI mais clara com badge de modo sempre visível
+- [x] Sem regressões do Milestone A
+- [x] Toast substitui alert()
+- [x] ARIA roles e labels para acessibilidade
+- [x] Responsivo mobile
+- [x] Ícone de cadeado em células locked
+
+## Arquivos Criados/Modificados
+
+### Criados
+
+- `src/lib/storage.ts` - Persistência localStorage
+- `src/components/Toast.tsx` - Notificações toast
+- `src/components/ContinueGameModal.tsx` - Modal continuar/novo
+- `src/components/KeyboardController.tsx` - Controles de teclado
+
+### Modificados
+
+- `src/state/types.ts` - Adicionado ToastState
+- `src/state/reducer.ts` - Novas ações (CLEAR_CELL, NEW_GAME, etc)
+- `src/components/ActionBar.tsx` - Botões Limpar e Novo Jogo, badge de modo
+- `src/components/SudokuCell.tsx` - Ícone de cadeado, borda por modo, ARIA
+- `src/components/SudokuBoard.tsx` - ARIA role="grid"
+- `src/app/page.tsx` - Integração de persistência e keyboard
+- `src/app/globals.css` - Animação fadeIn
+
+## Atalhos de Teclado (Resumo)
+
+| Tecla            | Ação                           |
+| ---------------- | ------------------------------ |
+| 1-9              | Inserir número / Alternar nota |
+| Backspace/Delete | Limpar célula                  |
+| ↑↓←→             | Mover seleção                  |
+| N                | Toggle modo anotação           |
+| I                | Toggle modo investigador       |
+| U ou Ctrl+Z      | Desfazer                       |
+| Esc              | Sair de modo / Limpar seleção  |
+
+---
+
+**Milestone B Completo!** 🎉
+
+Jogo agora tem persistência, controles de teclado completos, UX melhorada e acessibilidade básica.

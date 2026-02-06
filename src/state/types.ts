@@ -23,6 +23,11 @@ export interface HistoryEntry {
   previousMeta: CellMeta[];
 }
 
+export interface ToastState {
+  message: string;
+  type: "info" | "success" | "warning" | "error";
+}
+
 export interface GameState {
   // Board data (81 cells each)
   given: CellValue[];
@@ -35,6 +40,7 @@ export interface GameState {
   mode: GameMode;
   mistakes: number;
   paused: boolean;
+  toast: ToastState | null;
 
   // Timer
   timer: TimerState;
@@ -64,6 +70,7 @@ export function createInitialState(): GameState {
     mode: "answer",
     mistakes: 0,
     paused: false,
+    toast: null,
     timer: {
       elapsedMs: 0,
       running: true,

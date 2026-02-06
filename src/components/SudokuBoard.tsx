@@ -4,7 +4,11 @@ import { SudokuCell } from "./SudokuCell";
 
 export function SudokuBoard() {
   return (
-    <div className="inline-grid grid-cols-9 gap-0 border-4 border-gray-800">
+    <div
+      className="inline-grid grid-cols-9 gap-0 border-4 border-gray-800"
+      role="grid"
+      aria-label="Sudoku board"
+    >
       {Array.from({ length: 81 }, (_, idx) => {
         const row = Math.floor(idx / 9);
         const col = idx % 9;

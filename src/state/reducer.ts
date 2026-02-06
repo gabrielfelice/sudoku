@@ -14,10 +14,27 @@ export type GameAction =
   | { type: "SET_MODE"; mode: GameMode }
   | { type: "INPUT_DIGIT"; digit: Digit }
   | { type: "ERASE_NOTES" }
+  | { type: "CLEAR_CELL" }
   | { type: "UNDO" }
   | { type: "TOGGLE_PAUSE" }
   | { type: "TICK_TIMER"; now: number }
-  | { type: "HINT" };
+  | { type: "HINT" }
+  | { type: "NEW_GAME"; given: CellValue[]; solution: CellValue[] }
+  | {
+      type: "LOAD_SAVED_GAME";
+      given: CellValue[];
+      solution: CellValue[];
+      values: CellValue[];
+      meta: CellMeta[];
+      mistakes: number;
+      elapsedMs: number;
+    }
+  | {
+      type: "SET_TOAST";
+      message: string;
+      toastType: "info" | "success" | "warning" | "error";
+    }
+  | { type: "CLEAR_TOAST" };
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -219,6 +236,101 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case "HINT": {
       // Placeholder for MVP
       return state;
+    }
+
+    case "CLEAR_CELL": {
+      const { selectedIdx, values, meta } = state;
+      if (selectedIdx === null) return state;
+      if (meta[selectedIdx].isLocked || meta[selectedIdx].isGiven) return state;
+
+      const newValues = [...values];
+      const newMeta = meta.map((m) => ({ ...m }));
+      const previousValues = [values[selectedIdx]];
+      const previousMeta = [{ ...meta[selectedIdx] }];
+
+      // Clear the value but keep notes
+      newValues[selectedIdx] = 0;
+      newMeta[selectedIdx].status = "empty";
+
+      return {
+        ...state,
+        values: newValues,
+        meta: newMeta,
+        history: [
+          ...state.history,
+          { indices: [selectedIdx], previousValues, previousMeta },
+        ],
+      };
+    }
+
+    case "NEW_GAME": {
+      const { given, solution } = action;
+      const values = [...given];
+      const meta: CellMeta[] = given.map((val) => ({
+        isGiven: val !== 0,
+        isLocked: val !== 0,
+        status: val !== 0 ? "correct" : "empty",
+        notes: 0,
+      }));
+
+      return {
+        ...state,
+        given,
+        solution,
+        values,
+        meta,
+        selectedIdx: null,
+        mode: "answer",
+        mistakes: 0,
+        paused: false,
+        toast: null,
+        history: [],
+        timer: {
+          elapsedMs: 0,
+          running: true,
+          lastTick: Date.now(),
+        },
+      };
+    }
+
+    case "LOAD_SAVED_GAME": {
+      const { given, solution, values, meta, mistakes, elapsedMs } = action;
+
+      return {
+        ...state,
+        given,
+        solution,
+        values,
+        meta,
+        selectedIdx: null,
+        mode: "answer",
+        mistakes,
+        paused: false,
+        toast: null,
+        history: [],
+        timer: {
+          elapsedMs,
+          running: true,
+          lastTick: Date.now(),
+        },
+      };
+    }
+
+    case "SET_TOAST": {
+      return {
+        ...state,
+        toast: {
+          message: action.message,
+          type: action.toastType,
+        },
+      };
+    }
+
+    case "CLEAR_TOAST": {
+      return {
+        ...state,
+        toast: null,
+      };
     }
 
     default:

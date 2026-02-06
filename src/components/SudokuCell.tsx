@@ -12,6 +12,7 @@ export function SudokuCell({ idx }: SudokuCellProps) {
   const values = useGameStore((s) => s.values);
   const meta = useGameStore((s) => s.meta);
   const selectedIdx = useGameStore((s) => s.selectedIdx);
+  const mode = useGameStore((s) => s.mode);
   const dispatch = useGameStore((s) => s.dispatch);
 
   const cellValue = values[idx];
@@ -57,18 +58,41 @@ export function SudokuCell({ idx }: SudokuCellProps) {
   }
 
   // Ring/border for same number
-  const ringClass = isSameNumber ? "ring-2 ring-purple-500" : "";
+  let ringClass = isSameNumber ? "ring-2 ring-purple-500" : "";
+
+  // Mode-specific border styling when selected
+  if (isSelected) {
+    if (mode === "note") {
+      ringClass = "ring-4 ring-green-500";
+    } else if (mode === "inspect") {
+      ringClass = "ring-4 ring-yellow-500";
+    } else {
+      ringClass = "ring-4 ring-blue-500";
+    }
+  }
 
   return (
     <button
       onClick={handleClick}
       className={`
-        w-12 h-12 border border-gray-300 flex items-center justify-center
+        w-12 h-12 border border-gray-300 flex items-center justify-center relative
         ${bgColor} ${ringClass}
         hover:bg-blue-100 transition-colors
         focus:outline-none focus:ring-2 focus:ring-blue-400
       `}
+      aria-label={`Cell ${idx + 1}, ${cellValue !== 0 ? `value ${cellValue}` : "empty"}`}
+      role="gridcell"
     >
+      {/* Locked indicator */}
+      {cellMeta.isLocked && !cellMeta.isGiven && (
+        <div
+          className="absolute top-0.5 right-0.5 text-[8px] text-blue-400 opacity-60"
+          title="Célula travada (resposta correta)"
+        >
+          🔒
+        </div>
+      )}
+
       {cellValue !== 0 ? (
         <span className={`text-2xl ${textColor}`}>{cellValue}</span>
       ) : (
