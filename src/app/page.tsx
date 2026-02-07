@@ -11,13 +11,18 @@ import { PauseOverlay } from "@/components/PauseOverlay";
 import { Toast } from "@/components/Toast";
 import { ContinueGameModal } from "@/components/ContinueGameModal";
 import { KeyboardController } from "@/components/KeyboardController";
-import { EASY_PUZZLE, parsePuzzle } from "@/lib/puzzles";
+import { HintModal } from "@/components/HintModal";
+import { ErrorExplanationModal } from "@/components/ErrorExplanationModal";
+import { DifficultySelector } from "@/components/DifficultySelector";
+import { generatePuzzleWithCache } from "@/engine/generator";
 import { saveGame, loadGame, clearSave } from "@/lib/storage";
 
 export default function HomePage() {
   const dispatch = useGameStore((s) => s.dispatch);
   const paused = useGameStore((s) => s.paused);
   const toast = useGameStore((s) => s.toast);
+  const difficulty = useGameStore((s) => s.difficulty);
+  const seed = useGameStore((s) => s.seed);
   const gameState = useGameStore();
 
   const [showContinueModal, setShowContinueModal] = useState(false);
@@ -29,11 +34,20 @@ export default function HomePage() {
     if (saved) {
       setShowContinueModal(true);
     } else {
-      // No saved game, start fresh
-      const given = parsePuzzle(EASY_PUZZLE.given) as CellValue[];
-      const solution = parsePuzzle(EASY_PUZZLE.solution) as CellValue[];
-      dispatch({ type: "INIT_PUZZLE", given, solution });
-      setIsInitialized(true);
+      // No saved game, start fresh with generated puzzle
+      try {
+        const puzzle = generatePuzzleWithCache("medium");
+        dispatch({
+          type: "INIT_PUZZLE",
+          given: puzzle.given,
+          solution: puzzle.solution,
+          difficulty: puzzle.difficulty,
+          seed: puzzle.seed,
+        });
+        setIsInitialized(true);
+      } catch (error) {
+        console.error("Failed to generate initial puzzle:", error);
+      }
     }
   }, [dispatch]);
 
@@ -81,14 +95,27 @@ export default function HomePage() {
 
   const handleNewGame = () => {
     clearSave();
-    const given = parsePuzzle(EASY_PUZZLE.given) as CellValue[];
-    const solution = parsePuzzle(EASY_PUZZLE.solution) as CellValue[];
-    dispatch({ type: "NEW_GAME", given, solution });
-    dispatch({
-      type: "SET_TOAST",
-      message: "Novo jogo iniciado!",
-      toastType: "success",
-    });
+    try {
+      const puzzle = generatePuzzleWithCache(difficulty);
+      dispatch({
+        type: "NEW_GAME",
+        given: puzzle.given,
+        solution: puzzle.solution,
+        difficulty: puzzle.difficulty,
+        seed: puzzle.seed,
+      });
+      dispatch({
+        type: "SET_TOAST",
+        message: `Novo jogo (${puzzle.difficulty}) iniciado!`,
+        toastType: "success",
+      });
+    } catch (error) {
+      dispatch({
+        type: "SET_TOAST",
+        message: "Erro ao gerar puzzle",
+        toastType: "error",
+      });
+    }
     setShowContinueModal(false);
     setIsInitialized(true);
   };
@@ -107,6 +134,12 @@ export default function HomePage() {
         />
       )}
 
+      {/* Hint modal */}
+      <HintModal />
+
+      {/* Error explanation modal */}
+      <ErrorExplanationModal />
+
       {/* Toast notifications */}
       {toast && (
         <Toast
@@ -120,9 +153,19 @@ export default function HomePage() {
       <KeyboardController />
 
       {/* Main game UI */}
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
-        <div className="bg-white rounded-xl shadow-2xl overflow-hidden max-w-2xl w-full">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden max-w-2xl w-full">
           <TopBar />
+
+          {/* Difficulty selector */}
+          <div className="px-6 pt-4 pb-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <DifficultySelector />
+            {seed && (
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                Seed: {seed}
+              </div>
+            )}
+          </div>
 
           <div className="p-6 flex flex-col items-center gap-6 relative">
             {paused && <PauseOverlay />}

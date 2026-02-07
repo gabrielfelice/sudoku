@@ -1,4 +1,4 @@
-# Sudoku MVP - Milestone B
+# Sudoku MVP - Milestone C
 
 Jogo de Sudoku completo implementado com Next.js (App Router), TypeScript, Tailwind CSS e Zustand.
 
@@ -10,6 +10,11 @@ src/
 │   ├── types.ts     # Tipos e constantes
 │   ├── peers.ts     # Cálculo de peers (linha/coluna/bloco)
 │   ├── bitmask.ts   # Gerenciamento de notas via bitmask
+│   ├── solver-types.ts   # Tipos para solver (NOVO)
+│   ├── solver.ts         # Solver lógico com técnicas (NOVO)
+│   ├── uniqueness.ts     # Verificação de solução única (NOVO)
+│   ├── generator.ts      # Geração de puzzles (NOVO)
+│   ├── difficulty.ts     # Classificação de dificuldade (NOVO)
 │   └── index.ts     # Barrel export
 ├── state/           # Estado global com Zustand
 │   ├── types.ts     # Tipos do estado do jogo
@@ -18,7 +23,7 @@ src/
 ├── lib/             # Utilitários
 │   ├── puzzles.ts   # Puzzle hardcoded para MVP
 │   ├── time.ts      # Formatação de tempo
-│   └── storage.ts   # Persistência localStorage (NOVO)
+│   └── storage.ts   # Persistência localStorage
 ├── components/      # Componentes React
 │   ├── TopBar.tsx
 │   ├── SudokuBoard.tsx
@@ -26,9 +31,12 @@ src/
 │   ├── ActionBar.tsx
 │   ├── Keypad.tsx
 │   ├── PauseOverlay.tsx
-│   ├── Toast.tsx              # Toast notifications (NOVO)
-│   ├── ContinueGameModal.tsx  # Modal continuar/novo jogo (NOVO)
-│   └── KeyboardController.tsx # Controles de teclado (NOVO)
+│   ├── Toast.tsx
+│   ├── ContinueGameModal.tsx
+│   ├── KeyboardController.tsx
+│   ├── HintModal.tsx              # Modal de dicas (NOVO)
+│   ├── ErrorExplanationModal.tsx  # Modal de explicação (NOVO)
+│   └── DifficultySelector.tsx     # Seletor de dificuldade (NOVO)
 └── app/             # Next.js App Router
     ├── layout.tsx
     ├── page.tsx
@@ -113,6 +121,63 @@ Quando uma célula estiver selecionada:
   - "Jogo retomado!" (success)
   - "Novo jogo iniciado!" (success)
   - "Dica: implementar no Milestone C" (info)
+
+### Milestone C (Novo) ✨
+
+#### 1. Geração de Puzzles com Solução Única
+
+- **Gerador de solução**: Backtracking randomizado para criar board completo
+- **Digging com uniqueness**: Remove números garantindo solução única
+- **Cache local**: 5 puzzles pré-gerados por dificuldade para carregamento instantâneo
+- **Seed opcional**: Permite reproduzir puzzles específicos
+- **API**: `generatePuzzle(difficulty, seed?)` e `generatePuzzleWithCache(difficulty)`
+
+#### 2. Níveis de Dificuldade
+
+- **4 níveis**: Easy, Medium, Hard, Expert
+- **Classificação inteligente**: Baseada em solver lógico
+- **Critérios estáveis**:
+  - **Easy**: Apenas naked/hidden singles, ≥36 givens, ≤30 passos
+  - **Medium**: Inclui naked pairs, 30-35 givens, 30-50 passos
+  - **Hard**: Técnicas avançadas, 25-29 givens, >50 passos
+  - **Expert**: Muitas técnicas avançadas, <25 givens, >60 passos
+- **Seletor visual**: Segmented control com cores (verde/amarelo/laranja/vermelho)
+
+#### 3. Solver Lógico com Rastreio
+
+- **5 técnicas implementadas**:
+  1. Naked Single - Célula com apenas um candidato
+  2. Hidden Single (Row) - Dígito só pode estar em uma célula da linha
+  3. Hidden Single (Col) - Dígito só pode estar em uma célula da coluna
+  4. Hidden Single (Block) - Dígito só pode estar em uma célula do bloco
+  5. Naked Pair - Duas células com mesmos 2 candidatos (eliminação)
+- **Rastreamento de passos**: Cada passo registrado com técnica, células, explicação
+- **Candidatos via bitmask**: Operações bit a bit para performance
+- **API**: `solveLogical(board)` retorna `{ solved, steps, finalBoard, candidates }`
+
+#### 4. Sistema de Dicas
+
+- **Botão "💡 Dica"**: Obtém próximo passo lógico aplicável
+- **Modal de dica**: Mostra técnica, explicação em pt-BR, destaque visual
+- **Considera notas do usuário**: Dica leva em conta candidatos anotados
+- **Aplicar dica**: Botão para preencher automaticamente (placement)
+- **Destaque roxo**: Células envolvidas destacadas em roxo
+- **API**: `getNextHint(board, userNotes?)`
+
+#### 5. Explicação de Erros
+
+- **Botão "❌ Explicação"**: Aparece quando célula errada está selecionada
+- **Animação pulse**: Chama atenção para o botão
+- **Modal explicativo**: Mostra tipo de conflito (linha/coluna/bloco)
+- **Não revela solução**: Apenas explica por que está errado
+- **Dica adicional**: Sugere uso de notas para evitar erros
+
+#### 6. UI de Dificuldade e Seed
+
+- **Seletor de dificuldade**: Segmented control acima do tabuleiro
+- **Display de seed**: Mostra seed do puzzle atual (quando disponível)
+- **Novo jogo**: Gera puzzle na dificuldade selecionada
+- **Persistência**: Preferência de dificuldade salva no estado
 
 ## Como Executar
 
@@ -305,16 +370,18 @@ interface SavedGame {
 - **Auto-dismiss**: Usuário não precisa fechar
 - **Tipos visuais**: Cor indica severidade
 
-## Próximos Passos (Milestone C)
+## Próximos Passos (Milestone D - Sugestão)
 
-- Geração de puzzles
-- Dificuldades (easy/medium/hard)
-- Dica real (revelar célula)
-- Estatísticas e perfil
-- Live conflict highlight
-- Temas visuais
+- Mais técnicas de solver (X-Wing, Swordfish, XY-Wing)
+- Compartilhamento de puzzles via URL/seed
+- Estatísticas e histórico de jogos
+- Tutorial interativo
+- Achievements e gamificação
+- Temas visuais customizáveis
 
 ## Critérios de Aceitação ✅
+
+### Milestone A & B
 
 - [x] Recarregar página oferece continuar e estado volta idêntico
 - [x] Teclado funciona com segurança (respeita locked/given/paused/inspect)
@@ -325,6 +392,18 @@ interface SavedGame {
 - [x] ARIA roles e labels para acessibilidade
 - [x] Responsivo mobile
 - [x] Ícone de cadeado em células locked
+
+### Milestone C
+
+- [x] Usuário pode escolher dificuldade e gerar novo puzzle
+- [x] Puzzle gerado tem solução única
+- [x] Puzzle é solucionável
+- [x] Botão "Dica" produz explicação em português
+- [x] Células são destacadas durante dica
+- [x] Botão "Explicação" aparece ao selecionar célula errada
+- [x] Explicação de erro não revela solução
+- [x] Sem regressões dos milestones anteriores
+- [x] Performance aceitável (geração <2s, dica <100ms)
 
 ## Arquivos Criados/Modificados
 

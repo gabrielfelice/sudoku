@@ -2,13 +2,17 @@
 
 import { useGameStore } from "@/state/store";
 import { CellValue } from "@/engine";
-import { parsePuzzle, EASY_PUZZLE } from "@/lib/puzzles";
+import { getNextHint } from "@/engine/solver";
+import { generatePuzzleWithCache } from "@/engine/generator";
 
 export function ActionBar() {
   const mode = useGameStore((s) => s.mode);
   const dispatch = useGameStore((s) => s.dispatch);
   const paused = useGameStore((s) => s.paused);
   const selectedIdx = useGameStore((s) => s.selectedIdx);
+  const values = useGameStore((s) => s.values);
+  const meta = useGameStore((s) => s.meta);
+  const difficulty = useGameStore((s) => s.difficulty);
 
   const handleClear = () => {
     dispatch({ type: "CLEAR_CELL" });
@@ -34,26 +38,70 @@ export function ActionBar() {
   };
 
   const handleHint = () => {
+    // Obter notas do usuário
+    const userNotes = meta.map((m) => m.notes);
+
+    // Obter próxima dica
+    const hint = getNextHint(values, userNotes);
+
+    if (!hint) {
+      dispatch({
+        type: "SET_TOAST",
+        message: "Nenhuma dica disponível no momento",
+        toastType: "info",
+      });
+      return;
+    }
+
+    // Mostrar dica
     dispatch({
-      type: "SET_TOAST",
-      message: "Dica: implementar no Milestone C",
-      toastType: "info",
+      type: "SHOW_HINT",
+      hint: {
+        visible: true,
+        techniqueName: hint.techniqueName,
+        explanation: hint.explanation,
+        highlight: {
+          primary: hint.targetCells,
+          secondary: [],
+        },
+      },
     });
   };
 
+  const handleErrorExplanation = () => {
+    dispatch({ type: "SHOW_ERROR_EXPLANATION" });
+  };
+
   const handleNewGame = () => {
-    const given = parsePuzzle(EASY_PUZZLE.given) as CellValue[];
-    const solution = parsePuzzle(EASY_PUZZLE.solution) as CellValue[];
-    dispatch({ type: "NEW_GAME", given, solution });
-    dispatch({
-      type: "SET_TOAST",
-      message: "Novo jogo iniciado!",
-      toastType: "success",
-    });
+    try {
+      const puzzle = generatePuzzleWithCache(difficulty);
+      dispatch({
+        type: "NEW_GAME",
+        given: puzzle.given,
+        solution: puzzle.solution,
+        difficulty: puzzle.difficulty,
+        seed: puzzle.seed,
+      });
+      dispatch({
+        type: "SET_TOAST",
+        message: `Novo jogo (${puzzle.difficulty}) iniciado!`,
+        toastType: "success",
+      });
+    } catch (error) {
+      dispatch({
+        type: "SET_TOAST",
+        message: "Erro ao gerar puzzle. Tente novamente.",
+        toastType: "error",
+      });
+    }
   };
 
   const isDisabled = paused;
   const isClearDisabled = isDisabled || selectedIdx === null;
+
+  // Verificar se há célula errada selecionada
+  const hasWrongCell =
+    selectedIdx !== null && meta[selectedIdx]?.status === "wrong";
 
   return (
     <div className="w-full space-y-4">
@@ -139,16 +187,28 @@ export function ActionBar() {
         <button
           onClick={handleHint}
           disabled={isDisabled}
-          className="px-3 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+          className="px-3 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm shadow-lg shadow-purple-500/30"
+          title="Obter dica"
         >
-          Dica
+          💡 Dica
         </button>
+
+        {hasWrongCell && (
+          <button
+            onClick={handleErrorExplanation}
+            disabled={isDisabled}
+            className="px-3 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm shadow-lg shadow-red-500/30 animate-pulse"
+            title="Por que está errado?"
+          >
+            ❌ Explicação
+          </button>
+        )}
 
         <button
           onClick={handleNewGame}
           disabled={isDisabled}
           className="px-3 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-          title="Reiniciar jogo"
+          title="Gerar novo jogo"
         >
           Novo Jogo
         </button>

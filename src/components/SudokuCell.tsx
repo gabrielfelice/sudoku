@@ -18,12 +18,18 @@ export function SudokuCell({ idx }: SudokuCellProps) {
   const cellValue = values[idx];
   const cellMeta = meta[idx];
   const isSelected = selectedIdx === idx;
+  const hint = useGameStore((s) => s.hint);
 
   // Determine if this cell is a peer of the selected cell
   const isPeer =
     selectedIdx !== null &&
     selectedIdx !== idx &&
     getPeers(selectedIdx).includes(idx);
+
+  // Determine if this cell is highlighted by a hint
+  const isHintPrimary = hint?.visible && hint.highlight.primary.includes(idx);
+  const isHintSecondary =
+    hint?.visible && hint.highlight.secondary.includes(idx);
 
   // Determine if this cell has the same number as the selected cell
   const selectedValue = selectedIdx !== null ? values[selectedIdx] : 0;
@@ -41,7 +47,11 @@ export function SudokuCell({ idx }: SudokuCellProps) {
 
   // Cell background color
   let bgColor = "bg-white";
-  if (isSelected) {
+  if (isHintPrimary) {
+    bgColor = "bg-purple-200";
+  } else if (isHintSecondary) {
+    bgColor = "bg-purple-100";
+  } else if (isSelected) {
     bgColor = "bg-blue-200";
   } else if (isPeer) {
     bgColor = "bg-blue-50";

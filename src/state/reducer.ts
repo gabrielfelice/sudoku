@@ -9,7 +9,13 @@ import {
 import { GameState, CellMeta, GameMode, HistoryEntry } from "./types";
 
 export type GameAction =
-  | { type: "INIT_PUZZLE"; given: CellValue[]; solution: CellValue[] }
+  | {
+      type: "INIT_PUZZLE";
+      given: CellValue[];
+      solution: CellValue[];
+      difficulty?: "easy" | "medium" | "hard" | "expert";
+      seed?: number;
+    }
   | { type: "SELECT_CELL"; idx: number | null }
   | { type: "SET_MODE"; mode: GameMode }
   | { type: "INPUT_DIGIT"; digit: Digit }
@@ -18,8 +24,23 @@ export type GameAction =
   | { type: "UNDO" }
   | { type: "TOGGLE_PAUSE" }
   | { type: "TICK_TIMER"; now: number }
-  | { type: "HINT" }
-  | { type: "NEW_GAME"; given: CellValue[]; solution: CellValue[] }
+  | { type: "REQUEST_HINT" }
+  | { type: "SHOW_HINT"; hint: import("./types").HintState }
+  | { type: "CLOSE_HINT" }
+  | { type: "APPLY_HINT" }
+  | { type: "SHOW_ERROR_EXPLANATION" }
+  | { type: "CLOSE_ERROR_EXPLANATION" }
+  | {
+      type: "SET_DIFFICULTY";
+      difficulty: "easy" | "medium" | "hard" | "expert";
+    }
+  | {
+      type: "NEW_GAME";
+      given: CellValue[];
+      solution: CellValue[];
+      difficulty?: "easy" | "medium" | "hard" | "expert";
+      seed?: number;
+    }
   | {
       type: "LOAD_SAVED_GAME";
       given: CellValue[];
@@ -39,7 +60,7 @@ export type GameAction =
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "INIT_PUZZLE": {
-      const { given, solution } = action;
+      const { given, solution, difficulty, seed } = action;
       const values = [...given];
       const meta: CellMeta[] = given.map((val, idx) => ({
         isGiven: val !== 0,
@@ -54,9 +75,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         solution,
         values,
         meta,
+        difficulty: difficulty || state.difficulty,
+        seed,
         selectedIdx: null,
         mistakes: 0,
         paused: false,
+        hint: null,
+        errorExplanation: null,
         history: [],
         timer: {
           elapsedMs: 0,
@@ -115,6 +140,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             values: newValues,
             meta: newMeta,
             mistakes: state.mistakes + 1,
+            hint: null, // fechar dica ao errar
             history: [
               ...state.history,
               { indices: [selectedIdx], previousValues, previousMeta },
@@ -233,9 +259,120 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
-    case "HINT": {
-      // Placeholder for MVP
+    case "REQUEST_HINT": {
+      // Implementado no componente via getNextHint
       return state;
+    }
+
+    case "SHOW_HINT": {
+      return {
+        ...state,
+        hint: action.hint,
+      };
+    }
+
+    case "CLOSE_HINT": {
+      return {
+        ...state,
+        hint: null,
+      };
+    }
+
+    case "APPLY_HINT": {
+      if (!state.hint) return state;
+
+      const { hint } = state;
+      const newValues = [...state.values];
+      const newMeta = state.meta.map((m) => ({ ...m }));
+
+      // Se a dica tem placement, aplicar
+      if (hint.techniqueName.includes("single")) {
+        const targetCell = hint.highlight.primary[0];
+        if (targetCell !== undefined) {
+          // Extrair dígito da explicação (simplificado)
+          const match = hint.explanation.match(/: (\d)/);
+          if (match) {
+            const digit = parseInt(match[1]) as CellValue;
+            newValues[targetCell] = digit;
+            newMeta[targetCell].status = "correct";
+            newMeta[targetCell].isLocked = true;
+            newMeta[targetCell].notes = 0;
+          }
+        }
+      }
+
+      return {
+        ...state,
+        values: newValues,
+        meta: newMeta,
+        hint: null,
+      };
+    }
+
+    case "SHOW_ERROR_EXPLANATION": {
+      const { selectedIdx, values, solution } = state;
+      if (selectedIdx === null) return state;
+      if (state.meta[selectedIdx].status !== "wrong") return state;
+
+      const wrongDigit = values[selectedIdx];
+      const correctDigit = solution[selectedIdx];
+
+      // Encontrar conflito
+      const peers = getPeers(selectedIdx);
+      let explanation = "";
+
+      for (const peerIdx of peers) {
+        if (
+          state.values[peerIdx] === wrongDigit ||
+          state.given[peerIdx] === wrongDigit
+        ) {
+          const peerRow = Math.floor(peerIdx / 9) + 1;
+          const peerCol = (peerIdx % 9) + 1;
+          const cellRow = Math.floor(selectedIdx / 9) + 1;
+          const cellCol = (selectedIdx % 9) + 1;
+
+          // Determinar tipo de conflito
+          if (Math.floor(peerIdx / 9) === Math.floor(selectedIdx / 9)) {
+            explanation = `Na linha ${cellRow}, já existe o número ${wrongDigit} na coluna ${peerCol}. Este número não pode aparecer duas vezes na mesma linha.`;
+          } else if (peerIdx % 9 === selectedIdx % 9) {
+            explanation = `Na coluna ${cellCol}, já existe o número ${wrongDigit} na linha ${peerRow}. Este número não pode aparecer duas vezes na mesma coluna.`;
+          } else {
+            const blockRow = Math.floor(Math.floor(selectedIdx / 9) / 3);
+            const blockCol = Math.floor((selectedIdx % 9) / 3);
+            const blockNum = blockRow * 3 + blockCol + 1;
+            explanation = `No bloco ${blockNum}, já existe o número ${wrongDigit} na célula (${peerRow}, ${peerCol}). Este número não pode aparecer duas vezes no mesmo bloco.`;
+          }
+          break;
+        }
+      }
+
+      if (!explanation) {
+        explanation = `O número ${wrongDigit} não pode estar nesta célula. Verifique os candidatos possíveis baseado nos números já preenchidos na linha, coluna e bloco.`;
+      }
+
+      return {
+        ...state,
+        errorExplanation: {
+          visible: true,
+          cellIdx: selectedIdx,
+          wrongDigit,
+          explanation,
+        },
+      };
+    }
+
+    case "CLOSE_ERROR_EXPLANATION": {
+      return {
+        ...state,
+        errorExplanation: null,
+      };
+    }
+
+    case "SET_DIFFICULTY": {
+      return {
+        ...state,
+        difficulty: action.difficulty,
+      };
     }
 
     case "CLEAR_CELL": {
@@ -264,7 +401,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case "NEW_GAME": {
-      const { given, solution } = action;
+      const { given, solution, difficulty, seed } = action;
       const values = [...given];
       const meta: CellMeta[] = given.map((val) => ({
         isGiven: val !== 0,
@@ -279,11 +416,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         solution,
         values,
         meta,
+        difficulty: difficulty || state.difficulty,
+        seed,
         selectedIdx: null,
         mode: "answer",
         mistakes: 0,
         paused: false,
         toast: null,
+        hint: null,
+        errorExplanation: null,
         history: [],
         timer: {
           elapsedMs: 0,
