@@ -104,6 +104,16 @@ export interface GameState {
 
   // Theme configuration
   theme: ThemeConfig;
+
+  // Session tracking
+  currentSessionId: string | null;
+
+  // Lesson mode
+  lessonMode: {
+    active: boolean;
+    lessonId: string | null;
+    allowedTechniques: string[];
+  };
 }
 
 export function createInitialMeta(): CellMeta {
@@ -166,5 +176,11 @@ export function createInitialState(): GameState {
     history: [],
     config: createDefaultConfig(),
     theme: createDefaultTheme(),
+    currentSessionId: null,
+    lessonMode: {
+      active: false,
+      lessonId: null,
+      allowedTechniques: [],
+    },
   };
 }

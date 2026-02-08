@@ -77,10 +77,12 @@ export function ActionBar() {
       const puzzle = generatePuzzleWithCache(difficulty);
       dispatch({
         type: "NEW_GAME",
-        given: puzzle.given,
-        solution: puzzle.solution,
-        difficulty: puzzle.difficulty,
-        seed: puzzle.seed,
+        payload: {
+          given: puzzle.given,
+          solution: puzzle.solution,
+          difficulty: puzzle.difficulty,
+          seed: puzzle.seed,
+        },
       });
       dispatch({
         type: "SET_TOAST",

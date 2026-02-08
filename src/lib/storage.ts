@@ -10,6 +10,8 @@ export interface SavedGame {
   puzzle: {
     given: CellValue[];
     solution: CellValue[];
+    difficulty?: "easy" | "medium" | "hard" | "expert";
+    seed?: number;
   };
   state: {
     values: CellValue[];
@@ -30,6 +32,8 @@ export function saveGame(state: GameState): void {
       puzzle: {
         given: state.given,
         solution: state.solution,
+        difficulty: state.difficulty,
+        seed: state.seed,
       },
       state: {
         values: state.values,

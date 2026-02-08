@@ -25,6 +25,8 @@ export type GameAction =
   | { type: "CLEAR_CELL" }
   | { type: "UNDO" }
   | { type: "TOGGLE_PAUSE" }
+  | { type: "PAUSE" }
+  | { type: "RESUME" }
   | { type: "TICK_TIMER"; now: number }
   | { type: "REQUEST_HINT" }
   | { type: "SHOW_HINT"; hint: import("./types").HintState }
@@ -38,10 +40,12 @@ export type GameAction =
     }
   | {
       type: "NEW_GAME";
-      given: CellValue[];
-      solution: CellValue[];
-      difficulty?: "easy" | "medium" | "hard" | "expert";
-      seed?: number;
+      payload?: {
+        given: CellValue[];
+        solution: CellValue[];
+        difficulty?: "easy" | "medium" | "hard" | "expert";
+        seed?: number;
+      };
     }
   | {
       type: "LOAD_SAVED_GAME";
@@ -65,6 +69,18 @@ export type GameAction =
   | {
       type: "SET_THEME";
       theme: Partial<import("./types").ThemeConfig>;
+    }
+  | {
+      type: "SET_SESSION_ID";
+      sessionId: string | null;
+    }
+  | {
+      type: "SET_LESSON_MODE";
+      payload: {
+        active: boolean;
+        lessonId: string | null;
+        allowedTechniques: string[];
+      };
     };
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
@@ -471,7 +487,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case "NEW_GAME": {
-      const { given, solution, difficulty, seed } = action;
+      if (!action.payload) return state;
+      const { given, solution, difficulty, seed } = action.payload;
       const values = [...given];
       const meta: CellMeta[] = given.map((val) => ({
         isGiven: val !== 0,
@@ -501,6 +518,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           running: true,
           lastTick: Date.now(),
         },
+        currentSessionId: null,
       };
     }
 
@@ -561,6 +579,43 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           ...state.theme,
           ...action.theme,
         },
+      };
+    }
+
+    case "PAUSE": {
+      return {
+        ...state,
+        paused: true,
+        timer: {
+          ...state.timer,
+          running: false,
+        },
+      };
+    }
+
+    case "RESUME": {
+      return {
+        ...state,
+        paused: false,
+        timer: {
+          ...state.timer,
+          running: true,
+          lastTick: Date.now(),
+        },
+      };
+    }
+
+    case "SET_SESSION_ID": {
+      return {
+        ...state,
+        currentSessionId: action.sessionId,
+      };
+    }
+
+    case "SET_LESSON_MODE": {
+      return {
+        ...state,
+        lessonMode: action.payload,
       };
     }
 
