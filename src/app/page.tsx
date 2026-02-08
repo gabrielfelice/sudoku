@@ -14,8 +14,10 @@ import { KeyboardController } from "@/components/KeyboardController";
 import { HintModal } from "@/components/HintModal";
 import { ErrorExplanationModal } from "@/components/ErrorExplanationModal";
 import { DifficultySelector } from "@/components/DifficultySelector";
+import { SettingsModal } from "@/components/SettingsModal";
 import { generatePuzzleWithCache } from "@/engine/generator";
 import { saveGame, loadGame, clearSave } from "@/lib/storage";
+import { useTheme } from "@/lib/useTheme";
 
 export default function HomePage() {
   const dispatch = useGameStore((s) => s.dispatch);
@@ -26,7 +28,34 @@ export default function HomePage() {
   const gameState = useGameStore();
 
   const [showContinueModal, setShowContinueModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Apply theme
+  useTheme();
+
+  // Load saved config and theme on mount
+  useEffect(() => {
+    const { loadConfig, loadTheme } = require("@/lib/config-storage");
+    const savedConfig = loadConfig();
+    const savedTheme = loadTheme();
+
+    if (savedConfig) {
+      dispatch({ type: "SET_CONFIG", config: savedConfig });
+    }
+    if (savedTheme) {
+      dispatch({ type: "SET_THEME", theme: savedTheme });
+    }
+  }, [dispatch]);
+
+  // Auto-save config and theme when they change
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const { saveConfig, saveTheme } = require("@/lib/config-storage");
+    saveConfig(gameState.config);
+    saveTheme(gameState.theme);
+  }, [gameState.config, gameState.theme, isInitialized]);
 
   // Check for saved game on mount
   useEffect(() => {
@@ -134,6 +163,12 @@ export default function HomePage() {
         />
       )}
 
+      {/* Settings modal */}
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+      />
+
       {/* Hint modal */}
       <HintModal />
 
@@ -160,11 +195,20 @@ export default function HomePage() {
           {/* Difficulty selector */}
           <div className="px-6 pt-4 pb-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
             <DifficultySelector />
-            {seed && (
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                Seed: {seed}
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              {seed && (
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  Seed: {seed}
+                </div>
+              )}
+              <button
+                onClick={() => setShowSettingsModal(true)}
+                className="px-3 py-1 text-sm rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                title="Configurações"
+              >
+                ⚙️ Configurações
+              </button>
+            </div>
           </div>
 
           <div className="p-6 flex flex-col items-center gap-6 relative">

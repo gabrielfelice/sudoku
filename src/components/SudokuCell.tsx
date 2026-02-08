@@ -13,6 +13,7 @@ export function SudokuCell({ idx }: SudokuCellProps) {
   const meta = useGameStore((s) => s.meta);
   const selectedIdx = useGameStore((s) => s.selectedIdx);
   const mode = useGameStore((s) => s.mode);
+  const config = useGameStore((s) => s.config);
   const dispatch = useGameStore((s) => s.dispatch);
 
   const cellValue = values[idx];
@@ -33,7 +34,10 @@ export function SudokuCell({ idx }: SudokuCellProps) {
 
   // Determine if this cell has the same number as the selected cell
   const selectedValue = selectedIdx !== null ? values[selectedIdx] : 0;
-  const isSameNumber = cellValue !== 0 && cellValue === selectedValue;
+  const isSameNumber =
+    config.showSameNumberHighlight &&
+    cellValue !== 0 &&
+    cellValue === selectedValue;
 
   // Determine if notes should be highlighted (bold)
   const highlightedNoteDigit: Digit | null =
@@ -45,51 +49,59 @@ export function SudokuCell({ idx }: SudokuCellProps) {
     dispatch({ type: "SELECT_CELL", idx });
   };
 
-  // Cell background color
-  let bgColor = "bg-white";
+  // Cell background color using CSS variables
+  let bgStyle: React.CSSProperties = {};
   if (isHintPrimary) {
-    bgColor = "bg-purple-200";
+    bgStyle.backgroundColor = "var(--hint-primary-bg)";
   } else if (isHintSecondary) {
-    bgColor = "bg-purple-100";
+    bgStyle.backgroundColor = "var(--hint-secondary-bg)";
   } else if (isSelected) {
-    bgColor = "bg-blue-200";
-  } else if (isPeer) {
-    bgColor = "bg-blue-50";
+    bgStyle.backgroundColor = "var(--selected-cell-bg)";
+  } else if (isPeer && config.showPeerHighlight) {
+    bgStyle.backgroundColor = "var(--peer-cell-bg)";
   }
 
-  // Number color
-  let textColor = "text-black";
+  // Number color using CSS variables
+  let textStyle: React.CSSProperties = {};
   if (cellMeta.isGiven) {
-    textColor = "text-black font-bold";
+    textStyle.color = "var(--given-number-color)";
+    textStyle.fontWeight = "bold";
   } else if (cellMeta.status === "correct") {
-    textColor = "text-blue-600 font-semibold";
+    textStyle.color = "var(--correct-number-color)";
+    textStyle.fontWeight = "600";
   } else if (cellMeta.status === "wrong") {
-    textColor = "text-red-600 font-semibold";
+    textStyle.color = "var(--wrong-number-color)";
+    textStyle.fontWeight = "600";
   }
 
-  // Ring/border for same number
-  let ringClass = isSameNumber ? "ring-2 ring-purple-500" : "";
+  // Ring/border for same number using CSS variable
+  let ringStyle: React.CSSProperties = {};
+  if (isSameNumber) {
+    ringStyle.outline = "2px solid var(--same-number-outline)";
+    ringStyle.outlineOffset = "-2px";
+  }
 
   // Mode-specific border styling when selected
   if (isSelected) {
     if (mode === "note") {
-      ringClass = "ring-4 ring-green-500";
+      ringStyle.outline = "4px solid #10b981";
+      ringStyle.outlineOffset = "-4px";
     } else if (mode === "inspect") {
-      ringClass = "ring-4 ring-yellow-500";
+      ringStyle.outline = "4px solid #f59e0b";
+      ringStyle.outlineOffset = "-4px";
     } else {
-      ringClass = "ring-4 ring-blue-500";
+      ringStyle.outline = "4px solid #3b82f6";
+      ringStyle.outlineOffset = "-4px";
     }
   }
+
+  const combinedStyle = { ...bgStyle, ...ringStyle };
 
   return (
     <button
       onClick={handleClick}
-      className={`
-        w-12 h-12 border border-gray-300 flex items-center justify-center relative
-        ${bgColor} ${ringClass}
-        hover:bg-blue-100 transition-colors
-        focus:outline-none focus:ring-2 focus:ring-blue-400
-      `}
+      style={combinedStyle}
+      className="w-12 h-12 border border-gray-300 flex items-center justify-center relative hover:bg-blue-100 transition-colors focus:outline-none"
       aria-label={`Cell ${idx + 1}, ${cellValue !== 0 ? `value ${cellValue}` : "empty"}`}
       role="gridcell"
     >
@@ -104,7 +116,9 @@ export function SudokuCell({ idx }: SudokuCellProps) {
       )}
 
       {cellValue !== 0 ? (
-        <span className={`text-2xl ${textColor}`}>{cellValue}</span>
+        <span className="text-2xl" style={textStyle}>
+          {cellValue}
+        </span>
       ) : (
         <div className="grid grid-cols-3 gap-0 w-full h-full p-0.5">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => {

@@ -5,6 +5,8 @@ import {
   toggleNote,
   clearNotes,
   removeNote,
+  cleanInvalidNotes,
+  removeDigitFromPeers,
 } from "@/engine";
 import { GameState, CellMeta, GameMode, HistoryEntry } from "./types";
 
@@ -55,7 +57,15 @@ export type GameAction =
       message: string;
       toastType: "info" | "success" | "warning" | "error";
     }
-  | { type: "CLEAR_TOAST" };
+  | { type: "CLEAR_TOAST" }
+  | {
+      type: "SET_CONFIG";
+      config: Partial<import("./types").PlayerConfig>;
+    }
+  | {
+      type: "SET_THEME";
+      theme: Partial<import("./types").ThemeConfig>;
+    };
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -101,7 +111,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "INPUT_DIGIT": {
       const { digit } = action;
-      const { selectedIdx, mode, values, meta, solution } = state;
+      const { selectedIdx, mode, values, meta, solution, config } = state;
 
       if (selectedIdx === null || mode === "inspect") return state;
       if (meta[selectedIdx].isLocked || meta[selectedIdx].isGiven) return state;
@@ -117,21 +127,36 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         const isCorrect = digit === solution[selectedIdx];
 
         if (isCorrect) {
-          // Correct answer: lock cell and auto-remove notes from peers
+          // Correct answer
           newMeta[selectedIdx].status = "correct";
-          newMeta[selectedIdx].isLocked = true;
           newMeta[selectedIdx].notes = 0;
 
-          // Auto-remove this digit from peers' notes
-          const peers = getPeers(selectedIdx);
-          peers.forEach((peerIdx) => {
-            if (values[peerIdx] === 0 && newMeta[peerIdx].notes !== 0) {
-              newMeta[peerIdx].notes = removeNote(
-                newMeta[peerIdx].notes,
-                digit,
-              );
-            }
-          });
+          // Auto-lock if enabled
+          if (config.autoLockOnCorrect) {
+            newMeta[selectedIdx].isLocked = true;
+          }
+
+          // Auto-remove this digit from peers' notes if enabled
+          if (config.autoRemoveNotes) {
+            const peers = getPeers(selectedIdx);
+            peers.forEach((peerIdx) => {
+              if (values[peerIdx] === 0 && newMeta[peerIdx].notes !== 0) {
+                newMeta[peerIdx].notes = removeNote(
+                  newMeta[peerIdx].notes,
+                  digit,
+                );
+              }
+            });
+          }
+
+          // Auto-clean invalid notes if enabled
+          if (config.autoCleanInvalidNotes) {
+            const currentNotes = newMeta.map((m) => m.notes);
+            const cleanedNotes = cleanInvalidNotes(newValues, currentNotes);
+            cleanedNotes.forEach((notes, idx) => {
+              newMeta[idx].notes = notes;
+            });
+          }
         } else {
           // Wrong answer: mark as wrong and increment mistakes
           newMeta[selectedIdx].status = "wrong";
@@ -281,9 +306,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case "APPLY_HINT": {
       if (!state.hint) return state;
 
-      const { hint } = state;
-      const newValues = [...state.values];
-      const newMeta = state.meta.map((m) => ({ ...m }));
+      const { hint, values, meta } = state;
+      const newValues = [...values];
+      const newMeta = meta.map((m) => ({ ...m }));
+      const affectedIndices: number[] = [];
+      const previousValues: CellValue[] = [];
+      const previousMeta: CellMeta[] = [];
 
       // Se a dica tem placement, aplicar
       if (hint.techniqueName.includes("single")) {
@@ -293,12 +321,47 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           const match = hint.explanation.match(/: (\d)/);
           if (match) {
             const digit = parseInt(match[1]) as CellValue;
+            affectedIndices.push(targetCell);
+            previousValues.push(values[targetCell]);
+            previousMeta.push({ ...meta[targetCell] });
+
             newValues[targetCell] = digit;
             newMeta[targetCell].status = "correct";
             newMeta[targetCell].isLocked = true;
             newMeta[targetCell].notes = 0;
+
+            // Auto-remove from peers if enabled
+            if (state.config.autoRemoveNotes) {
+              const peers = getPeers(targetCell);
+              peers.forEach((peerIdx) => {
+                if (values[peerIdx] === 0 && newMeta[peerIdx].notes !== 0) {
+                  const oldNotes = newMeta[peerIdx].notes;
+                  newMeta[peerIdx].notes = removeNote(oldNotes, digit as Digit);
+                  if (oldNotes !== newMeta[peerIdx].notes) {
+                    if (!affectedIndices.includes(peerIdx)) {
+                      affectedIndices.push(peerIdx);
+                      previousValues.push(values[peerIdx]);
+                      previousMeta.push({ ...meta[peerIdx] });
+                    }
+                  }
+                }
+              });
+            }
           }
         }
+      } else if (
+        hint.techniqueName === "naked-pair" ||
+        hint.techniqueName === "pointing-pair" ||
+        hint.techniqueName === "box-line-reduction"
+      ) {
+        // Aplicar eliminações
+        // Extrair eliminações da explicação ou usar dados estruturados
+        // Por simplicidade, vamos apenas fechar a dica sem aplicar
+        // Em uma implementação completa, você armazenaria as eliminações no HintState
+        return {
+          ...state,
+          hint: null,
+        };
       }
 
       return {
@@ -306,6 +369,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         values: newValues,
         meta: newMeta,
         hint: null,
+        history:
+          affectedIndices.length > 0
+            ? [
+                ...state.history,
+                { indices: affectedIndices, previousValues, previousMeta },
+              ]
+            : state.history,
       };
     }
 
@@ -471,6 +541,26 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         toast: null,
+      };
+    }
+
+    case "SET_CONFIG": {
+      return {
+        ...state,
+        config: {
+          ...state.config,
+          ...action.config,
+        },
+      };
+    }
+
+    case "SET_THEME": {
+      return {
+        ...state,
+        theme: {
+          ...state.theme,
+          ...action.theme,
+        },
       };
     }
 

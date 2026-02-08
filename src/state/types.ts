@@ -47,6 +47,28 @@ export interface ErrorExplanationState {
   explanation: string;
 }
 
+export interface PlayerConfig {
+  autoLockOnCorrect: boolean;
+  autoRemoveNotes: boolean;
+  autoCleanInvalidNotes: boolean;
+  liveConflictHighlight: boolean;
+  maxErrors: number | null; // null = unlimited, 3, 5
+  showSameNumberHighlight: boolean;
+  showPeerHighlight: boolean;
+}
+
+export interface ThemeConfig {
+  selectedCellBg: string;
+  peerCellBg: string;
+  sameNumberOutline: string;
+  correctNumberColor: string;
+  wrongNumberColor: string;
+  givenNumberColor: string;
+  boardBorder: string;
+  hintPrimaryBg: string;
+  hintSecondaryBg: string;
+}
+
 export interface GameState {
   // Board data (81 cells each)
   given: CellValue[];
@@ -76,6 +98,12 @@ export interface GameState {
 
   // History for undo
   history: HistoryEntry[];
+
+  // Player configuration
+  config: PlayerConfig;
+
+  // Theme configuration
+  theme: ThemeConfig;
 }
 
 export function createInitialMeta(): CellMeta {
@@ -84,6 +112,32 @@ export function createInitialMeta(): CellMeta {
     isLocked: false,
     status: "empty",
     notes: 0,
+  };
+}
+
+export function createDefaultConfig(): PlayerConfig {
+  return {
+    autoLockOnCorrect: true,
+    autoRemoveNotes: true,
+    autoCleanInvalidNotes: false,
+    liveConflictHighlight: true,
+    maxErrors: null,
+    showSameNumberHighlight: true,
+    showPeerHighlight: true,
+  };
+}
+
+export function createDefaultTheme(): ThemeConfig {
+  return {
+    selectedCellBg: "#bbdefb",
+    peerCellBg: "#e3f2fd",
+    sameNumberOutline: "#1976d2",
+    correctNumberColor: "#1976d2",
+    wrongNumberColor: "#d32f2f",
+    givenNumberColor: "#000000",
+    boardBorder: "#000000",
+    hintPrimaryBg: "#fff9c4",
+    hintSecondaryBg: "#fff59d",
   };
 }
 
@@ -110,5 +164,7 @@ export function createInitialState(): GameState {
       lastTick: Date.now(),
     },
     history: [],
+    config: createDefaultConfig(),
+    theme: createDefaultTheme(),
   };
 }

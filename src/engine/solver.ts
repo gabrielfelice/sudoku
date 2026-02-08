@@ -257,6 +257,201 @@ function findNakedPair(
 }
 
 /**
+ * Técnica: Pointing Pair / Box-Line Reduction
+ * Se um dígito em um bloco só pode estar em uma linha/coluna,
+ * pode ser eliminado das outras células dessa linha/coluna fora do bloco
+ */
+function findPointingPair(
+  board: CellValue[],
+  candidates: CandidatesGrid,
+): SolverStep | null {
+  for (let block = 0; block < 9; block++) {
+    const blockRow = Math.floor(block / 3) * 3;
+    const blockCol = (block % 3) * 3;
+
+    for (const digit of DIGITS) {
+      const cellsWithDigit: number[] = [];
+
+      // Encontrar células no bloco com este candidato
+      for (let r = blockRow; r < blockRow + 3; r++) {
+        for (let c = blockCol; c < blockCol + 3; c++) {
+          const idx = r * 9 + c;
+          if (board[idx] === 0 && hasBit(candidates[idx], digit - 1)) {
+            cellsWithDigit.push(idx);
+          }
+        }
+      }
+
+      if (cellsWithDigit.length === 0) continue;
+
+      // Verificar se todos estão na mesma linha
+      const rows = new Set(cellsWithDigit.map((idx) => rowOf(idx)));
+      if (rows.size === 1) {
+        const row = Array.from(rows)[0];
+        const eliminations: Elimination[] = [];
+
+        // Eliminar de outras células da linha fora do bloco
+        for (let col = 0; col < 9; col++) {
+          const idx = row * 9 + col;
+          const cellBlock = blockOf(idx);
+          if (cellBlock === block) continue; // mesma célula do bloco
+          if (board[idx] !== 0) continue;
+          if (hasBit(candidates[idx], digit - 1)) {
+            eliminations.push({ cellIdx: idx, digits: [digit] });
+          }
+        }
+
+        if (eliminations.length > 0) {
+          return {
+            techniqueName: "pointing-pair",
+            targetCells: cellsWithDigit,
+            digits: [digit],
+            explanation: `No bloco ${block + 1}, o dígito ${digit} só pode estar na linha ${row + 1}. Portanto, pode ser eliminado das outras células dessa linha fora do bloco.`,
+            eliminations,
+          };
+        }
+      }
+
+      // Verificar se todos estão na mesma coluna
+      const cols = new Set(cellsWithDigit.map((idx) => colOf(idx)));
+      if (cols.size === 1) {
+        const col = Array.from(cols)[0];
+        const eliminations: Elimination[] = [];
+
+        // Eliminar de outras células da coluna fora do bloco
+        for (let row = 0; row < 9; row++) {
+          const idx = row * 9 + col;
+          const cellBlock = blockOf(idx);
+          if (cellBlock === block) continue;
+          if (board[idx] !== 0) continue;
+          if (hasBit(candidates[idx], digit - 1)) {
+            eliminations.push({ cellIdx: idx, digits: [digit] });
+          }
+        }
+
+        if (eliminations.length > 0) {
+          return {
+            techniqueName: "pointing-pair",
+            targetCells: cellsWithDigit,
+            digits: [digit],
+            explanation: `No bloco ${block + 1}, o dígito ${digit} só pode estar na coluna ${col + 1}. Portanto, pode ser eliminado das outras células dessa coluna fora do bloco.`,
+            eliminations,
+          };
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Técnica: Box-Line Reduction
+ * Se um dígito em uma linha/coluna só pode estar em um bloco,
+ * pode ser eliminado das outras células desse bloco
+ */
+function findBoxLineReduction(
+  board: CellValue[],
+  candidates: CandidatesGrid,
+): SolverStep | null {
+  // Verificar linhas
+  for (let row = 0; row < 9; row++) {
+    for (const digit of DIGITS) {
+      const cellsWithDigit: number[] = [];
+
+      for (let col = 0; col < 9; col++) {
+        const idx = row * 9 + col;
+        if (board[idx] === 0 && hasBit(candidates[idx], digit - 1)) {
+          cellsWithDigit.push(idx);
+        }
+      }
+
+      if (cellsWithDigit.length === 0) continue;
+
+      // Verificar se todos estão no mesmo bloco
+      const blocks = new Set(cellsWithDigit.map((idx) => blockOf(idx)));
+      if (blocks.size === 1) {
+        const block = Array.from(blocks)[0];
+        const blockRow = Math.floor(block / 3) * 3;
+        const blockCol = (block % 3) * 3;
+        const eliminations: Elimination[] = [];
+
+        // Eliminar de outras células do bloco fora da linha
+        for (let r = blockRow; r < blockRow + 3; r++) {
+          if (r === row) continue;
+          for (let c = blockCol; c < blockCol + 3; c++) {
+            const idx = r * 9 + c;
+            if (board[idx] !== 0) continue;
+            if (hasBit(candidates[idx], digit - 1)) {
+              eliminations.push({ cellIdx: idx, digits: [digit] });
+            }
+          }
+        }
+
+        if (eliminations.length > 0) {
+          return {
+            techniqueName: "box-line-reduction",
+            targetCells: cellsWithDigit,
+            digits: [digit],
+            explanation: `Na linha ${row + 1}, o dígito ${digit} só pode estar no bloco ${block + 1}. Portanto, pode ser eliminado das outras células desse bloco.`,
+            eliminations,
+          };
+        }
+      }
+    }
+  }
+
+  // Verificar colunas
+  for (let col = 0; col < 9; col++) {
+    for (const digit of DIGITS) {
+      const cellsWithDigit: number[] = [];
+
+      for (let row = 0; row < 9; row++) {
+        const idx = row * 9 + col;
+        if (board[idx] === 0 && hasBit(candidates[idx], digit - 1)) {
+          cellsWithDigit.push(idx);
+        }
+      }
+
+      if (cellsWithDigit.length === 0) continue;
+
+      // Verificar se todos estão no mesmo bloco
+      const blocks = new Set(cellsWithDigit.map((idx) => blockOf(idx)));
+      if (blocks.size === 1) {
+        const block = Array.from(blocks)[0];
+        const blockRow = Math.floor(block / 3) * 3;
+        const blockCol = (block % 3) * 3;
+        const eliminations: Elimination[] = [];
+
+        // Eliminar de outras células do bloco fora da coluna
+        for (let r = blockRow; r < blockRow + 3; r++) {
+          for (let c = blockCol; c < blockCol + 3; c++) {
+            if (c === col) continue;
+            const idx = r * 9 + c;
+            if (board[idx] !== 0) continue;
+            if (hasBit(candidates[idx], digit - 1)) {
+              eliminations.push({ cellIdx: idx, digits: [digit] });
+            }
+          }
+        }
+
+        if (eliminations.length > 0) {
+          return {
+            techniqueName: "box-line-reduction",
+            targetCells: cellsWithDigit,
+            digits: [digit],
+            explanation: `Na coluna ${col + 1}, o dígito ${digit} só pode estar no bloco ${block + 1}. Portanto, pode ser eliminado das outras células desse bloco.`,
+            eliminations,
+          };
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
  * Resolver puzzle usando apenas lógica (sem backtracking)
  */
 export function solveLogical(board: CellValue[]): LogicalSolverResult {
@@ -278,6 +473,8 @@ export function solveLogical(board: CellValue[]): LogicalSolverResult {
     if (!step) step = findHiddenSingleInCol(currentBoard, candidates);
     if (!step) step = findHiddenSingleInBlock(currentBoard, candidates);
     if (!step) step = findNakedPair(currentBoard, candidates);
+    if (!step) step = findPointingPair(currentBoard, candidates);
+    if (!step) step = findBoxLineReduction(currentBoard, candidates);
 
     if (!step) {
       // Não encontrou mais passos lógicos
@@ -363,6 +560,12 @@ export function getNextHint(
   if (step) return step;
 
   step = findNakedPair(board, candidates);
+  if (step) return step;
+
+  step = findPointingPair(board, candidates);
+  if (step) return step;
+
+  step = findBoxLineReduction(board, candidates);
   if (step) return step;
 
   return null;

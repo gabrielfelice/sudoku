@@ -6,3 +6,4 @@ export * from "./solver";
 export * from "./uniqueness";
 export * from "./generator";
 export * from "./difficulty";
+export * from "./note-sync";
