@@ -21,6 +21,24 @@ export interface HistoryEntry {
   indices: number[];
   previousValues: CellValue[];
   previousMeta: CellMeta[];
+  timestamp: number; // For telemetry
+}
+
+export interface HintStep {
+  stepNumber: number;
+  title: string;
+  description: string;
+  highlightCells: number[];
+  highlightType: "primary" | "secondary";
+  canApply: boolean;
+}
+
+export interface ExplanationLayer {
+  type: "rule" | "candidates" | "technique";
+  title: string;
+  description: string;
+  highlightCells?: number[];
+  candidates?: number[];
 }
 
 export interface ToastState {
@@ -38,6 +56,9 @@ export interface HintState {
   techniqueName: string;
   explanation: string;
   highlight: HintHighlight;
+  steps?: HintStep[]; // Guided hint steps
+  currentStep?: number; // Current step index
+  canApply?: boolean; // Can apply current step
 }
 
 export interface ErrorExplanationState {
@@ -45,6 +66,9 @@ export interface ErrorExplanationState {
   cellIdx: number;
   wrongDigit: number;
   explanation: string;
+  layers?: ExplanationLayer[]; // Multi-layer explanation
+  currentLayer?: number; // Current layer index
+  conflictingCells?: number[]; // Cells that conflict
 }
 
 export interface PlayerConfig {
@@ -55,6 +79,8 @@ export interface PlayerConfig {
   maxErrors: number | null; // null = unlimited, 3, 5
   showSameNumberHighlight: boolean;
   showPeerHighlight: boolean;
+  hintLimit: number | null; // null = unlimited, 3, 5, 10
+  explanationLimit: number | null; // null = unlimited, 3, 5, 10
 }
 
 export interface ThemeConfig {
@@ -79,6 +105,8 @@ export interface GameState {
   // Puzzle metadata
   difficulty: "easy" | "medium" | "hard" | "expert";
   seed?: number;
+  puzzleSource: "generated" | "catalog" | "daily"; // NEW: Track puzzle origin
+  puzzleId?: string; // NEW: ID if from catalog
 
   // UI state
   selectedIdx: number | null;
@@ -98,6 +126,7 @@ export interface GameState {
 
   // History for undo
   history: HistoryEntry[];
+  cellHistory: Map<number, HistoryEntry[]>; // NEW: Per-cell history
 
   // Player configuration
   config: PlayerConfig;
@@ -113,6 +142,24 @@ export interface GameState {
     active: boolean;
     lessonId: string | null;
     allowedTechniques: string[];
+  };
+
+  // Usage tracking (NEW)
+  hintUsageCount: number;
+  explanationUsageCount: number;
+
+  // Telemetry (NEW - local only)
+  telemetry: {
+    actionTimestamps: number[]; // Last N action timestamps
+    errorCount: number;
+    hintCount: number;
+  };
+
+  // Cloud profile (NEW - optional)
+  cloudProfile?: {
+    userId: string;
+    syncStatus: "synced" | "syncing" | "error" | "local";
+    lastSyncTime?: number;
   };
 }
 
@@ -134,6 +181,8 @@ export function createDefaultConfig(): PlayerConfig {
     maxErrors: null,
     showSameNumberHighlight: true,
     showPeerHighlight: true,
+    hintLimit: null, // NEW: Unlimited by default
+    explanationLimit: null, // NEW: Unlimited by default
   };
 }
 
@@ -161,6 +210,8 @@ export function createInitialState(): GameState {
       .map(() => createInitialMeta()),
     difficulty: "medium",
     seed: undefined,
+    puzzleSource: "generated", // NEW
+    puzzleId: undefined, // NEW
     selectedIdx: null,
     mode: "answer",
     mistakes: 0,
@@ -174,6 +225,7 @@ export function createInitialState(): GameState {
       lastTick: Date.now(),
     },
     history: [],
+    cellHistory: new Map(), // NEW
     config: createDefaultConfig(),
     theme: createDefaultTheme(),
     currentSessionId: null,
@@ -182,5 +234,14 @@ export function createInitialState(): GameState {
       lessonId: null,
       allowedTechniques: [],
     },
+    hintUsageCount: 0, // NEW
+    explanationUsageCount: 0, // NEW
+    telemetry: {
+      // NEW
+      actionTimestamps: [],
+      errorCount: 0,
+      hintCount: 0,
+    },
+    cloudProfile: undefined, // NEW
   };
 }

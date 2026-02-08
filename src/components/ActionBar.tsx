@@ -2,8 +2,9 @@
 
 import { useGameStore } from "@/state/store";
 import { CellValue } from "@/engine";
-import { getNextHint } from "@/engine/solver";
-import { generatePuzzleWithCache } from "@/engine/generator";
+import { explainHint } from "@/engine/explain";
+import { UndoMenu } from "@/components/UndoMenu";
+import { useState } from "react";
 
 export function ActionBar() {
   const mode = useGameStore((s) => s.mode);
@@ -13,6 +14,8 @@ export function ActionBar() {
   const values = useGameStore((s) => s.values);
   const meta = useGameStore((s) => s.meta);
   const difficulty = useGameStore((s) => s.difficulty);
+
+  const [showNewGameModal, setShowNewGameModal] = useState(false);
 
   const handleClear = () => {
     dispatch({ type: "CLEAR_CELL" });
@@ -41,10 +44,10 @@ export function ActionBar() {
     // Obter notas do usuário
     const userNotes = meta.map((m) => m.notes);
 
-    // Obter próxima dica
-    const hint = getNextHint(values, userNotes);
+    // Obter dica guiada usando novo engine
+    const guidedHint = explainHint(values, userNotes);
 
-    if (!hint) {
+    if (!guidedHint) {
       dispatch({
         type: "SET_TOAST",
         message: "Nenhuma dica disponível no momento",
@@ -53,49 +56,25 @@ export function ActionBar() {
       return;
     }
 
-    // Mostrar dica
+    // Mostrar dica com passos
     dispatch({
       type: "SHOW_HINT",
       hint: {
         visible: true,
-        techniqueName: hint.techniqueName,
-        explanation: hint.explanation,
-        highlight: {
-          primary: hint.targetCells,
-          secondary: [],
-        },
+        techniqueName: guidedHint.techniqueName,
+        explanation: guidedHint.narrative,
+        highlight: guidedHint.highlight,
+        canApply: guidedHint.canApply,
+        steps: guidedHint.steps,
+        currentStep: 0,
       },
     });
+    dispatch({ type: "INCREMENT_HINT_USAGE" });
   };
 
   const handleErrorExplanation = () => {
     dispatch({ type: "SHOW_ERROR_EXPLANATION" });
-  };
-
-  const handleNewGame = () => {
-    try {
-      const puzzle = generatePuzzleWithCache(difficulty);
-      dispatch({
-        type: "NEW_GAME",
-        payload: {
-          given: puzzle.given,
-          solution: puzzle.solution,
-          difficulty: puzzle.difficulty,
-          seed: puzzle.seed,
-        },
-      });
-      dispatch({
-        type: "SET_TOAST",
-        message: `Novo jogo (${puzzle.difficulty}) iniciado!`,
-        toastType: "success",
-      });
-    } catch (error) {
-      dispatch({
-        type: "SET_TOAST",
-        message: "Erro ao gerar puzzle. Tente novamente.",
-        toastType: "error",
-      });
-    }
+    dispatch({ type: "INCREMENT_EXPLANATION_USAGE" });
   };
 
   const isDisabled = paused;
@@ -143,14 +122,7 @@ export function ActionBar() {
           Borracha
         </button>
 
-        <button
-          onClick={handleUndo}
-          disabled={isDisabled}
-          className="px-3 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-          title="Desfazer (U ou Ctrl+Z)"
-        >
-          Desfazer
-        </button>
+        <UndoMenu />
 
         <button
           onClick={handleToggleNote}
@@ -207,14 +179,30 @@ export function ActionBar() {
         )}
 
         <button
-          onClick={handleNewGame}
+          onClick={() => setShowNewGameModal(true)}
           disabled={isDisabled}
           className="px-3 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-          title="Gerar novo jogo"
+          title="Escolher novo jogo"
         >
-          Novo Jogo
+          🎲 Novo Jogo
         </button>
       </div>
+
+      {/* Import NewGameModal at component level */}
+      {showNewGameModal && (
+        <div className="fixed inset-0 z-50">
+          {/* Use dynamic import to avoid circular dependencies */}
+          {(() => {
+            const { NewGameModal } = require("@/components/NewGameModal");
+            return (
+              <NewGameModal
+                isOpen={showNewGameModal}
+                onClose={() => setShowNewGameModal(false)}
+              />
+            );
+          })()}
+        </div>
+      )}
     </div>
   );
 }

@@ -29,6 +29,9 @@ import TrainingHub from "@/components/TrainingHub";
 import LessonRunner from "@/components/LessonRunner";
 import { Badge } from "@/lib/profile";
 
+// Milestone F components
+import { NewGameModal } from "@/components/NewGameModal";
+
 type View = "play" | "training" | "profile" | "lesson";
 
 export default function HomePage() {
@@ -52,6 +55,7 @@ export default function HomePage() {
   const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
   const [showContinueModal, setShowContinueModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showNewGameModal, setShowNewGameModal] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [showVictory, setShowVictory] = useState(false);
   const [victoryBadges, setVictoryBadges] = useState<Badge[]>([]);
@@ -164,6 +168,7 @@ export default function HomePage() {
           solution: puzzle.solution,
           difficulty: puzzle.difficulty,
           seed: puzzle.seed,
+          puzzleSource: "generated",
         },
       });
 
@@ -278,6 +283,12 @@ export default function HomePage() {
       <SettingsModal
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
+      />
+
+      {/* New Game modal */}
+      <NewGameModal
+        isOpen={showNewGameModal}
+        onClose={() => setShowNewGameModal(false)}
       />
 
       {/* Hint modal */}

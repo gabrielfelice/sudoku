@@ -17,6 +17,8 @@ export type GameAction =
       solution: CellValue[];
       difficulty?: "easy" | "medium" | "hard" | "expert";
       seed?: number;
+      puzzleSource?: "generated" | "catalog" | "daily"; // NEW
+      puzzleId?: string; // NEW
     }
   | { type: "SELECT_CELL"; idx: number | null }
   | { type: "SET_MODE"; mode: GameMode }
@@ -24,6 +26,7 @@ export type GameAction =
   | { type: "ERASE_NOTES" }
   | { type: "CLEAR_CELL" }
   | { type: "UNDO" }
+  | { type: "UNDO_CELL" } // NEW: Undo last action for selected cell
   | { type: "TOGGLE_PAUSE" }
   | { type: "PAUSE" }
   | { type: "RESUME" }
@@ -32,7 +35,13 @@ export type GameAction =
   | { type: "SHOW_HINT"; hint: import("./types").HintState }
   | { type: "CLOSE_HINT" }
   | { type: "APPLY_HINT" }
+  | { type: "NEXT_HINT_STEP" } // NEW: Navigate to next hint step
+  | { type: "PREV_HINT_STEP" } // NEW: Navigate to previous hint step
+  | { type: "APPLY_HINT_STEP" } // NEW: Apply current hint step
   | { type: "SHOW_ERROR_EXPLANATION" }
+  | { type: "SHOW_ADVANCED_ERROR_EXPLANATION" } // NEW: Multi-layer explanation
+  | { type: "NEXT_EXPLANATION_LAYER" } // NEW: Navigate explanation layers
+  | { type: "PREV_EXPLANATION_LAYER" } // NEW: Navigate explanation layers
   | { type: "CLOSE_ERROR_EXPLANATION" }
   | {
       type: "SET_DIFFICULTY";
@@ -45,6 +54,8 @@ export type GameAction =
         solution: CellValue[];
         difficulty?: "easy" | "medium" | "hard" | "expert";
         seed?: number;
+        puzzleSource?: "generated" | "catalog" | "daily"; // NEW
+        puzzleId?: string; // NEW
       };
     }
   | {
@@ -81,12 +92,49 @@ export type GameAction =
         lessonId: string | null;
         allowedTechniques: string[];
       };
+    }
+  | { type: "INCREMENT_HINT_USAGE" } // NEW
+  | { type: "INCREMENT_EXPLANATION_USAGE" } // NEW
+  | { type: "RECORD_TELEMETRY"; actionType: string } // NEW
+  | {
+      type: "SET_CLOUD_PROFILE"; // NEW
+      userId: string;
+      syncStatus: "synced" | "syncing" | "error" | "local";
     };
+
+/**
+ * Helper function to add history entry with timestamp and per-cell tracking
+ */
+function addToHistory(
+  state: GameState,
+  indices: number[],
+  previousValues: CellValue[],
+  previousMeta: CellMeta[],
+): { history: HistoryEntry[]; cellHistory: Map<number, HistoryEntry[]> } {
+  const entry: HistoryEntry = {
+    indices,
+    previousValues,
+    previousMeta,
+    timestamp: Date.now(),
+  };
+
+  const newHistory = [...state.history, entry];
+  const newCellHistory = new Map(state.cellHistory);
+
+  // Add to per-cell history
+  indices.forEach((idx) => {
+    const cellEntries = newCellHistory.get(idx) || [];
+    newCellHistory.set(idx, [...cellEntries, entry]);
+  });
+
+  return { history: newHistory, cellHistory: newCellHistory };
+}
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "INIT_PUZZLE": {
-      const { given, solution, difficulty, seed } = action;
+      const { given, solution, difficulty, seed, puzzleSource, puzzleId } =
+        action;
       const values = [...given];
       const meta: CellMeta[] = given.map((val, idx) => ({
         isGiven: val !== 0,
@@ -103,12 +151,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         meta,
         difficulty: difficulty || state.difficulty,
         seed,
+        puzzleSource: puzzleSource || "generated",
+        puzzleId,
         selectedIdx: null,
         mistakes: 0,
         paused: false,
         hint: null,
         errorExplanation: null,
         history: [],
+        cellHistory: new Map(),
+        hintUsageCount: 0,
+        explanationUsageCount: 0,
         timer: {
           elapsedMs: 0,
           running: true,
@@ -176,27 +229,52 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         } else {
           // Wrong answer: mark as wrong and increment mistakes
           newMeta[selectedIdx].status = "wrong";
+          const { history, cellHistory } = addToHistory(
+            state,
+            [selectedIdx],
+            previousValues,
+            previousMeta,
+          );
+
           return {
             ...state,
             values: newValues,
             meta: newMeta,
             mistakes: state.mistakes + 1,
             hint: null, // fechar dica ao errar
-            history: [
-              ...state.history,
-              { indices: [selectedIdx], previousValues, previousMeta },
-            ],
+            history,
+            cellHistory,
+            telemetry: {
+              ...state.telemetry,
+              errorCount: state.telemetry.errorCount + 1,
+              actionTimestamps: [
+                ...state.telemetry.actionTimestamps.slice(-99),
+                Date.now(),
+              ],
+            },
           };
         }
+
+        const { history, cellHistory } = addToHistory(
+          state,
+          [selectedIdx],
+          previousValues,
+          previousMeta,
+        );
 
         return {
           ...state,
           values: newValues,
           meta: newMeta,
-          history: [
-            ...state.history,
-            { indices: [selectedIdx], previousValues, previousMeta },
-          ],
+          history,
+          cellHistory,
+          telemetry: {
+            ...state.telemetry,
+            actionTimestamps: [
+              ...state.telemetry.actionTimestamps.slice(-99),
+              Date.now(),
+            ],
+          },
         };
       } else if (mode === "note") {
         // Toggle note
@@ -205,13 +283,18 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           digit,
         );
 
+        const { history, cellHistory } = addToHistory(
+          state,
+          [selectedIdx],
+          previousValues,
+          previousMeta,
+        );
+
         return {
           ...state,
           meta: newMeta,
-          history: [
-            ...state.history,
-            { indices: [selectedIdx], previousValues, previousMeta },
-          ],
+          history,
+          cellHistory,
         };
       }
 
@@ -227,17 +310,18 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const previousMeta = [{ ...meta[selectedIdx] }];
       newMeta[selectedIdx].notes = clearNotes();
 
+      const { history, cellHistory } = addToHistory(
+        state,
+        [selectedIdx],
+        [state.values[selectedIdx]],
+        previousMeta,
+      );
+
       return {
         ...state,
         meta: newMeta,
-        history: [
-          ...state.history,
-          {
-            indices: [selectedIdx],
-            previousValues: [state.values[selectedIdx]],
-            previousMeta,
-          },
-        ],
+        history,
+        cellHistory,
       };
     }
 
@@ -264,12 +348,78 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         }
       });
 
+      // Update per-cell history
+      const newCellHistory = new Map(state.cellHistory);
+      lastEntry.indices.forEach((idx) => {
+        const cellEntries = newCellHistory.get(idx) || [];
+        const updatedEntries = cellEntries.filter((e) => e !== lastEntry);
+        if (updatedEntries.length > 0) {
+          newCellHistory.set(idx, updatedEntries);
+        } else {
+          newCellHistory.delete(idx);
+        }
+      });
+
       return {
         ...state,
         values: newValues,
         meta: newMeta,
         mistakes: state.mistakes + mistakesAdjustment,
         history: state.history.slice(0, -1),
+        cellHistory: newCellHistory,
+      };
+    }
+
+    case "UNDO_CELL": {
+      const { selectedIdx } = state;
+      if (selectedIdx === null) return state;
+
+      const cellEntries = state.cellHistory.get(selectedIdx);
+      if (!cellEntries || cellEntries.length === 0) return state;
+
+      const lastCellEntry = cellEntries[cellEntries.length - 1];
+      const newValues = [...state.values];
+      const newMeta = state.meta.map((m) => ({ ...m }));
+
+      // Restore values for this entry
+      lastCellEntry.indices.forEach((idx, i) => {
+        newValues[idx] = lastCellEntry.previousValues[i];
+        newMeta[idx] = { ...lastCellEntry.previousMeta[i] };
+      });
+
+      // Adjust mistakes if needed
+      let mistakesAdjustment = 0;
+      lastCellEntry.indices.forEach((idx, i) => {
+        if (
+          lastCellEntry.previousMeta[i].status !== "wrong" &&
+          state.meta[idx].status === "wrong"
+        ) {
+          mistakesAdjustment--;
+        }
+      });
+
+      // Remove from global history
+      const newHistory = state.history.filter((e) => e !== lastCellEntry);
+
+      // Update per-cell history
+      const newCellHistory = new Map(state.cellHistory);
+      lastCellEntry.indices.forEach((idx) => {
+        const entries = newCellHistory.get(idx) || [];
+        const updated = entries.filter((e) => e !== lastCellEntry);
+        if (updated.length > 0) {
+          newCellHistory.set(idx, updated);
+        } else {
+          newCellHistory.delete(idx);
+        }
+      });
+
+      return {
+        ...state,
+        values: newValues,
+        meta: newMeta,
+        mistakes: state.mistakes + mistakesAdjustment,
+        history: newHistory,
+        cellHistory: newCellHistory,
       };
     }
 
@@ -371,27 +521,37 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         hint.techniqueName === "box-line-reduction"
       ) {
         // Aplicar eliminações
-        // Extrair eliminações da explicação ou usar dados estruturados
-        // Por simplicidade, vamos apenas fechar a dica sem aplicar
-        // Em uma implementação completa, você armazenaria as eliminações no HintState
         return {
           ...state,
           hint: null,
         };
       }
 
+      if (affectedIndices.length > 0) {
+        const { history, cellHistory } = addToHistory(
+          state,
+          affectedIndices,
+          previousValues,
+          previousMeta,
+        );
+
+        return {
+          ...state,
+          values: newValues,
+          meta: newMeta,
+          hint: null,
+          history,
+          cellHistory,
+          telemetry: {
+            ...state.telemetry,
+            hintCount: state.telemetry.hintCount + 1,
+          },
+        };
+      }
+
       return {
         ...state,
-        values: newValues,
-        meta: newMeta,
         hint: null,
-        history:
-          affectedIndices.length > 0
-            ? [
-                ...state.history,
-                { indices: affectedIndices, previousValues, previousMeta },
-              ]
-            : state.history,
       };
     }
 
@@ -475,20 +635,26 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       newValues[selectedIdx] = 0;
       newMeta[selectedIdx].status = "empty";
 
+      const { history, cellHistory } = addToHistory(
+        state,
+        [selectedIdx],
+        previousValues,
+        previousMeta,
+      );
+
       return {
         ...state,
         values: newValues,
         meta: newMeta,
-        history: [
-          ...state.history,
-          { indices: [selectedIdx], previousValues, previousMeta },
-        ],
+        history,
+        cellHistory,
       };
     }
 
     case "NEW_GAME": {
       if (!action.payload) return state;
-      const { given, solution, difficulty, seed } = action.payload;
+      const { given, solution, difficulty, seed, puzzleSource, puzzleId } =
+        action.payload;
       const values = [...given];
       const meta: CellMeta[] = given.map((val) => ({
         isGiven: val !== 0,
@@ -505,6 +671,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         meta,
         difficulty: difficulty || state.difficulty,
         seed,
+        puzzleSource: puzzleSource || "generated",
+        puzzleId,
         selectedIdx: null,
         mode: "answer",
         mistakes: 0,
@@ -513,6 +681,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         hint: null,
         errorExplanation: null,
         history: [],
+        cellHistory: new Map(),
+        hintUsageCount: 0,
+        explanationUsageCount: 0,
         timer: {
           elapsedMs: 0,
           running: true,
@@ -616,6 +787,117 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         lessonMode: action.payload,
+      };
+    }
+
+    case "NEXT_HINT_STEP": {
+      if (!state.hint || !state.hint.steps) return state;
+      const currentStep = state.hint.currentStep ?? 0;
+      const nextStep = Math.min(currentStep + 1, state.hint.steps.length - 1);
+
+      return {
+        ...state,
+        hint: {
+          ...state.hint,
+          currentStep: nextStep,
+          canApply: state.hint.steps[nextStep]?.canApply ?? false,
+        },
+      };
+    }
+
+    case "PREV_HINT_STEP": {
+      if (!state.hint || !state.hint.steps) return state;
+      const currentStep = state.hint.currentStep ?? 0;
+      const prevStep = Math.max(currentStep - 1, 0);
+
+      return {
+        ...state,
+        hint: {
+          ...state.hint,
+          currentStep: prevStep,
+          canApply: state.hint.steps[prevStep]?.canApply ?? false,
+        },
+      };
+    }
+
+    case "APPLY_HINT_STEP": {
+      // Similar to APPLY_HINT but uses current step
+      return gameReducer(state, { type: "APPLY_HINT" });
+    }
+
+    case "SHOW_ADVANCED_ERROR_EXPLANATION": {
+      // This will be called from components with full explanation data
+      return state;
+    }
+
+    case "NEXT_EXPLANATION_LAYER": {
+      if (!state.errorExplanation || !state.errorExplanation.layers)
+        return state;
+      const currentLayer = state.errorExplanation.currentLayer ?? 0;
+      const nextLayer = Math.min(
+        currentLayer + 1,
+        state.errorExplanation.layers.length - 1,
+      );
+
+      return {
+        ...state,
+        errorExplanation: {
+          ...state.errorExplanation,
+          currentLayer: nextLayer,
+        },
+      };
+    }
+
+    case "PREV_EXPLANATION_LAYER": {
+      if (!state.errorExplanation || !state.errorExplanation.layers)
+        return state;
+      const currentLayer = state.errorExplanation.currentLayer ?? 0;
+      const prevLayer = Math.max(currentLayer - 1, 0);
+
+      return {
+        ...state,
+        errorExplanation: {
+          ...state.errorExplanation,
+          currentLayer: prevLayer,
+        },
+      };
+    }
+
+    case "INCREMENT_HINT_USAGE": {
+      return {
+        ...state,
+        hintUsageCount: state.hintUsageCount + 1,
+      };
+    }
+
+    case "INCREMENT_EXPLANATION_USAGE": {
+      return {
+        ...state,
+        explanationUsageCount: state.explanationUsageCount + 1,
+      };
+    }
+
+    case "RECORD_TELEMETRY": {
+      return {
+        ...state,
+        telemetry: {
+          ...state.telemetry,
+          actionTimestamps: [
+            ...state.telemetry.actionTimestamps.slice(-99),
+            Date.now(),
+          ],
+        },
+      };
+    }
+
+    case "SET_CLOUD_PROFILE": {
+      return {
+        ...state,
+        cloudProfile: {
+          userId: action.userId,
+          syncStatus: action.syncStatus,
+          lastSyncTime: Date.now(),
+        },
       };
     }
 
