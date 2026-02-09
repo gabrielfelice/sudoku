@@ -1,8 +1,16 @@
-# Sudoku MVP - Milestone C
+# Sudoku - Milestone I
 
 Jogo de Sudoku completo implementado com Next.js (App Router), TypeScript, Tailwind CSS e Zustand.
 
-## Estrutura do Projeto
+## Documentação
+
+Para informações detalhadas sobre a arquitetura e como estender o projeto, consulte:
+
+- [📐 Arquitetura](./docs/ARCHITECTURE.md) - Visão geral da estrutura do projeto
+- [🔤 Tipos Fundamentais](./docs/CORE_TYPES.md) - Tipos, bitmasks e invariantes
+- [🔄 Fluxo do Jogo](./docs/GAME_FLOW.md) - Input → Reducer → Render
+- [🧩 Geração de Puzzles](./docs/PUZZLE_GENERATION.md) - Algoritmos de geração e solver
+- [🔧 Guia de Extensão](./docs/EXTENDING.md) - Como adicionar novas funcionalidades
 
 ```
 src/
@@ -179,7 +187,56 @@ Quando uma célula estiver selecionada:
 - **Novo jogo**: Gera puzzle na dificuldade selecionada
 - **Persistência**: Preferência de dificuldade salva no estado
 
-## Como Executar
+### Milestone I (Novo) ✨
+
+#### 1. Tutorial Ilustrativo
+
+- **Tour guiado**: Tutorial passo a passo para novos jogadores
+- **Ilustrações visuais**: Cada etapa tem demonstração visual (SVG/mini-components)
+- **Navegação completa**: Botões Próximo, Voltar, Pular
+- **Não mostrar novamente**: Opção para desabilitar tutorial
+- **Responsivo**: Layout adaptável com scroll interno
+- **Português**: Todo conteúdo traduzido
+
+#### 2. Treinamento Expandido (9 Lições)
+
+- **Lições básicas** (1-3):
+  - Naked Singles
+  - Hidden Singles
+  - Naked Pairs
+- **Lições intermediárias** (4-6):
+  - Hidden Pairs
+  - Pointing Pairs
+  - Box-Line Reduction
+- **Lições avançadas** (7-9):
+  - Naked Triples
+  - X-Wing
+  - Swordfish
+- **Sistema de pré-requisitos**: Lições desbloqueiam progressivamente
+- **Dicas restritas**: Cada lição permite apenas técnicas ensinadas
+- **Progressão visual**: Barra de progresso e indicadores de conclusão
+
+#### 3. Filtros e Ordenação de Jogos Recentes
+
+- **Filtro por dificuldade**: All, Easy, Medium, Hard, Expert
+- **Ordenação múltipla**:
+  - Data (mais recente/mais antigo)
+  - Tempo (menor/maior)
+  - Erros (menos/mais)
+  - Dificuldade
+- **UI intuitiva**: Botões de filtro e sort com indicadores visuais
+- **Estado vazio**: Mensagem quando nenhum jogo corresponde aos filtros
+- **Limite aumentado**: Mostra até 20 jogos (antes 10)
+
+#### 4. Documentação Completa
+
+- **ARCHITECTURE.md**: Estrutura do projeto, camadas, fluxo de dados
+- **CORE_TYPES.md**: Tipos fundamentais, bitmasks, invariantes
+- **GAME_FLOW.md**: Fluxo detalhado de input → reducer → render
+- **PUZZLE_GENERATION.md**: Algoritmos de geração, solver, dicas
+- **EXTENDING.md**: Guias para adicionar técnicas, temas, lições, etc.
+
+## Estrutura do Projeto
 
 ### Desenvolvimento
 

@@ -1,0 +1,87 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-secondary, #f8f9fa);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.filterGroup,
+.sortGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+}
+
+.buttonGroup,
+.sortControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.filterButton,
+.sortButton {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color, #dee2e6);
+  background: white;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-secondary, #6c757d);
+}
+
+.filterButton:hover,
+.sortButton:hover {
+  border-color: #2196f3;
+  background: #f0f7ff;
+  color: #2196f3;
+}
+
+.filterButton.active,
+.sortButton.active {
+  background: #2196f3;
+  border-color: #1976d2;
+  color: white;
+  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.2);
+}
+
+.sortButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sortIcon {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .container {
+    padding: 0.75rem;
+    gap: 1rem;
+  }
+
+  .filterButton,
+  .sortButton {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .buttonGroup,
+  .sortControls {
+    gap: 0.375rem;
+  }
+}

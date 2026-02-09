@@ -1,7 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useProfileStore } from "@/state/profileStore";
+import GameFilters, {
+  DifficultyFilter,
+  SortField,
+  SortDirection,
+} from "./GameFilters";
 import styles from "./ProfilePage.module.css";
 
 function formatTime(ms: number): string {
@@ -22,11 +27,57 @@ export default function ProfilePage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(profile.name);
 
+  // Filter and sort state
+  const [difficultyFilter, setDifficultyFilter] =
+    useState<DifficultyFilter>("all");
+  const [sortField, setSortField] = useState<SortField>("date");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+
+  // Filter and sort games
+  const filteredAndSortedGames = useMemo(() => {
+    let games = [...profile.recentGames];
+
+    // Apply difficulty filter
+    if (difficultyFilter !== "all") {
+      games = games.filter((game) => game.difficulty === difficultyFilter);
+    }
+
+    // Apply sorting
+    games.sort((a, b) => {
+      let comparison = 0;
+
+      switch (sortField) {
+        case "date":
+          comparison = a.startedAt - b.startedAt;
+          break;
+        case "time":
+          comparison = a.timeMs - b.timeMs;
+          break;
+        case "errors":
+          comparison = a.mistakes - b.mistakes;
+          break;
+        case "difficulty":
+          const diffOrder = { easy: 1, medium: 2, hard: 3, expert: 4 };
+          comparison = diffOrder[a.difficulty] - diffOrder[b.difficulty];
+          break;
+      }
+
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+
+    return games;
+  }, [profile.recentGames, difficultyFilter, sortField, sortDirection]);
+
   const handleSaveName = () => {
     if (tempName.trim()) {
       setName(tempName.trim());
       setIsEditingName(false);
     }
+  };
+
+  const handleSortChange = (field: SortField, direction: SortDirection) => {
+    setSortField(field);
+    setSortDirection(direction);
   };
 
   const difficulties: Array<"easy" | "medium" | "hard" | "expert"> = [
@@ -148,48 +199,63 @@ export default function ProfilePage() {
       )}
 
       <div className={styles.section}>
-        <h2>Recent Games</h2>
+        <h2>Jogos Recentes</h2>
         {profile.recentGames.length === 0 ? (
-          <p className={styles.emptyState}>No games played yet</p>
+          <p className={styles.emptyState}>Nenhum jogo jogado ainda</p>
         ) : (
-          <div className={styles.gameList}>
-            {profile.recentGames.slice(0, 10).map((game) => (
-              <div key={game.id} className={styles.gameCard}>
-                <div className={styles.gameHeader}>
-                  <span
-                    className={`${styles.difficulty} ${styles[game.difficulty]}`}
-                  >
-                    {game.difficulty.charAt(0).toUpperCase() +
-                      game.difficulty.slice(1)}
-                  </span>
-                  <span className={styles.gameDate}>
-                    {formatDate(game.startedAt)}
-                  </span>
-                </div>
-                <div className={styles.gameStats}>
-                  <div className={styles.gameStat}>
-                    <span className={styles.gameStatLabel}>Time:</span>
-                    <span className={styles.gameStatValue}>
-                      {formatTime(game.timeMs)}
-                    </span>
+          <>
+            <GameFilters
+              selectedDifficulty={difficultyFilter}
+              onDifficultyChange={setDifficultyFilter}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSortChange={handleSortChange}
+            />
+            {filteredAndSortedGames.length === 0 ? (
+              <p className={styles.emptyState}>
+                Nenhum jogo encontrado com os filtros selecionados
+              </p>
+            ) : (
+              <div className={styles.gameList}>
+                {filteredAndSortedGames.slice(0, 20).map((game) => (
+                  <div key={game.id} className={styles.gameCard}>
+                    <div className={styles.gameHeader}>
+                      <span
+                        className={`${styles.difficulty} ${styles[game.difficulty]}`}
+                      >
+                        {game.difficulty.charAt(0).toUpperCase() +
+                          game.difficulty.slice(1)}
+                      </span>
+                      <span className={styles.gameDate}>
+                        {formatDate(game.startedAt)}
+                      </span>
+                    </div>
+                    <div className={styles.gameStats}>
+                      <div className={styles.gameStat}>
+                        <span className={styles.gameStatLabel}>Tempo:</span>
+                        <span className={styles.gameStatValue}>
+                          {formatTime(game.timeMs)}
+                        </span>
+                      </div>
+                      <div className={styles.gameStat}>
+                        <span className={styles.gameStatLabel}>Erros:</span>
+                        <span className={styles.gameStatValue}>
+                          {game.mistakes}
+                        </span>
+                      </div>
+                      <div className={styles.gameStat}>
+                        <span
+                          className={`${styles.gameStatus} ${game.completed ? styles.completed : styles.abandoned}`}
+                        >
+                          {game.completed ? "✓ Completo" : "✕ Abandonado"}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className={styles.gameStat}>
-                    <span className={styles.gameStatLabel}>Mistakes:</span>
-                    <span className={styles.gameStatValue}>
-                      {game.mistakes}
-                    </span>
-                  </div>
-                  <div className={styles.gameStat}>
-                    <span
-                      className={`${styles.gameStatus} ${game.completed ? styles.completed : styles.abandoned}`}
-                    >
-                      {game.completed ? "✓ Completed" : "✕ Abandoned"}
-                    </span>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>

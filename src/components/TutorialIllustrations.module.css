@@ -1,0 +1,315 @@
+.demoContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-secondary, #f8f9fa);
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.demoCaption {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6c757d);
+  text-align: center;
+}
+
+/* Mini Board */
+.miniBoard {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  background: var(--border-color, #dee2e6);
+  border: 2px solid var(--border-color, #dee2e6);
+  border-radius: 4px;
+  padding: 2px;
+}
+
+.cell {
+  width: 48px;
+  height: 48px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  position: relative;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.cell.highlighted {
+  background: #e3f2fd;
+}
+
+.cell.selected {
+  background: #2196f3;
+  color: white;
+  box-shadow: 0 0 0 2px #1976d2;
+}
+
+.cellValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.notes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  width: 100%;
+  height: 100%;
+  padding: 2px;
+  gap: 1px;
+}
+
+.note {
+  font-size: 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+}
+
+.note.noteActive {
+  color: #2196f3;
+  font-weight: 600;
+}
+
+/* Keypad Demo */
+.keypadDemo {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 4px;
+  margin-top: 0.5rem;
+}
+
+.keypadButton {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-color, #dee2e6);
+  background: white;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.keypadButton:hover {
+  background: #f8f9fa;
+}
+
+.keypadButton.active {
+  background: #2196f3;
+  color: white;
+  border-color: #1976d2;
+}
+
+/* Mode Toggle */
+.modeToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #dee2e6);
+}
+
+.modeLabel {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.modeLabel.active {
+  color: #2196f3;
+  font-weight: 600;
+}
+
+.toggleSwitch {
+  width: 48px;
+  height: 24px;
+  background: #e0e0e0;
+  border-radius: 12px;
+  position: relative;
+  transition: background 0.3s ease;
+}
+
+.toggleActive {
+  width: 20px;
+  height: 20px;
+  background: #2196f3;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  transition: all 0.3s ease;
+}
+
+/* Hint Panel */
+.hintPanel {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 2px solid #ffc107;
+  max-width: 320px;
+}
+
+.hintIcon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.hintContent h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  color: #2196f3;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hintContent p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+/* Pause Overlay */
+.pauseOverlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  border-radius: 8px;
+  min-width: 240px;
+}
+
+.pauseIcon {
+  font-size: 3rem;
+}
+
+.pauseOverlay h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.pauseOverlay p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #adb5bd;
+}
+
+.resumeButton {
+  padding: 0.5rem 1.5rem;
+  background: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.resumeButton:hover {
+  background: #1976d2;
+}
+
+/* Settings Panel */
+.settingsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #dee2e6);
+  min-width: 280px;
+}
+
+.settingRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.settingSelect {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-color, #dee2e6);
+  border-radius: 4px;
+  background: white;
+  font-size: 0.875rem;
+}
+
+.settingToggle {
+  padding: 0.25rem 0.75rem;
+  background: #4caf50;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  gap: 1rem;
+}
+
+.actionButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: white;
+  border: 2px solid var(--border-color, #dee2e6);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.actionButton:hover {
+  border-color: #2196f3;
+  background: #f8f9fa;
+}
+
+.buttonIcon {
+  font-size: 1.5rem;
+}
+
+.actionButton span:last-child {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .cell {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+
+  .keypadButton {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+
+  .settingsPanel {
+    min-width: 240px;
+  }
+}

@@ -73,13 +73,19 @@
 
 .body {
   padding: 24px;
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 .body p {
-  margin: 0;
+  margin: 0 0 16px 0;
   font-size: 16px;
   line-height: 1.6;
   color: #333;
+}
+
+.illustration {
+  margin-top: 16px;
 }
 
 .footer {
@@ -136,7 +142,8 @@
 }
 
 .skipButton,
-.nextButton {
+.nextButton,
+.backButton {
   padding: 10px 20px;
   border-radius: 6px;
   font-size: 14px;
@@ -144,6 +151,16 @@
   cursor: pointer;
   transition: all 0.2s;
   border: none;
+}
+
+.backButton {
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #e0e0e0;
+}
+
+.backButton:hover {
+  background: #e0e0e0;
 }
 
 .skipButton {

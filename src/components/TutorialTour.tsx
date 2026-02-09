@@ -3,63 +3,82 @@
 import { useState, useEffect } from "react";
 import { useProfileStore } from "@/state/profileStore";
 import styles from "./TutorialTour.module.css";
+import {
+  BoardSelectionDemo,
+  NumberInputDemo,
+  NoteModeDemo,
+  UndoEraseDemo,
+  HintSystemDemo,
+  PauseModeDemo,
+  SettingsDemo,
+} from "./TutorialIllustrations";
 
 interface TutorialStep {
   title: string;
   description: string;
+  illustration?: React.ReactNode;
   target?: string;
 }
 
 const TUTORIAL_STEPS: TutorialStep[] = [
   {
-    title: "Welcome to Sudoku!",
+    title: "Bem-vindo ao Sudoku!",
     description:
-      "This quick tour will show you how to use the game. You can skip it anytime.",
+      "Este tour rápido mostrará como usar o jogo. Você pode pular a qualquer momento ou voltar para revisar os passos.",
   },
   {
-    title: "Select a Cell",
+    title: "Selecionar uma Célula",
     description:
-      "Click on any empty cell to select it. The selected cell will be highlighted.",
+      "Clique em qualquer célula vazia para selecioná-la. A célula selecionada será destacada em azul.",
+    illustration: <BoardSelectionDemo />,
     target: "board",
   },
   {
-    title: "Enter Numbers",
+    title: "Inserir Números",
     description:
-      "Use the keypad below or your keyboard (1-9) to fill in numbers.",
+      "Use o teclado numérico abaixo ou as teclas 1-9 do seu teclado para preencher números.",
+    illustration: <NumberInputDemo />,
     target: "keypad",
   },
   {
-    title: "Note Mode",
+    title: "Modo de Notas",
     description:
-      "Toggle note mode to add small candidate numbers to cells. This helps you track possibilities.",
+      "Ative o modo de notas para adicionar pequenos números candidatos às células. Isso ajuda a rastrear possibilidades.",
+    illustration: <NoteModeDemo />,
     target: "note-button",
   },
   {
-    title: "Erase & Undo",
+    title: "Apagar e Desfazer",
     description:
-      "Use the eraser to clear a cell, or undo to revert your last move.",
+      "Use a borracha para limpar uma célula, ou desfazer para reverter seu último movimento.",
+    illustration: <UndoEraseDemo />,
     target: "erase-button",
   },
   {
-    title: "Get Hints",
+    title: "Obter Dicas",
     description:
-      "Stuck? Use the hint button to get a logical suggestion with explanation.",
+      "Travado? Use o botão de dica para obter uma sugestão lógica com explicação detalhada.",
+    illustration: <HintSystemDemo />,
     target: "hint-button",
   },
   {
-    title: "Pause & Resume",
-    description: "Need a break? Pause the game to hide the board and timer.",
+    title: "Pausar e Retomar",
+    description:
+      "Precisa de uma pausa? Pause o jogo para ocultar o tabuleiro e pausar o cronômetro.",
+    illustration: <PauseModeDemo />,
     target: "pause-button",
   },
   {
-    title: "Settings & Themes",
+    title: "Configurações e Temas",
     description:
-      "Customize your experience in the settings menu - change themes, adjust game rules, and more!",
+      "Personalize sua experiência no menu de configurações - mude temas, ajuste regras do jogo e muito mais!",
+    illustration: <SettingsDemo />,
     target: "settings-button",
   },
   {
-    title: "You're Ready!",
-    description: "That's all! Enjoy playing Sudoku. Good luck!",
+    title: "Você está Pronto!",
+    description:
+      "É isso! Aproveite jogando Sudoku. Boa sorte e divirta-se resolvendo puzzles!",
   },
 ];
 
@@ -78,12 +97,19 @@ export default function TutorialTour({
 
   const step = TUTORIAL_STEPS[currentStep];
   const isLastStep = currentStep === TUTORIAL_STEPS.length - 1;
+  const isFirstStep = currentStep === 0;
 
   const handleNext = () => {
     if (isLastStep) {
       handleComplete();
     } else {
       setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
     }
   };
 
@@ -115,11 +141,14 @@ export default function TutorialTour({
 
         <div className={styles.body}>
           <p>{step.description}</p>
+          {step.illustration && (
+            <div className={styles.illustration}>{step.illustration}</div>
+          )}
         </div>
 
         <div className={styles.footer}>
           <div className={styles.progress}>
-            Step {currentStep + 1} of {TUTORIAL_STEPS.length}
+            Passo {currentStep + 1} de {TUTORIAL_STEPS.length}
           </div>
 
           <div className={styles.progressBar}>
@@ -138,17 +167,22 @@ export default function TutorialTour({
                 checked={dontShowAgain}
                 onChange={(e) => setDontShowAgain(e.target.checked)}
               />
-              Don't show again
+              Não mostrar novamente
             </label>
 
             <div className={styles.buttons}>
+              {!isFirstStep && (
+                <button className={styles.backButton} onClick={handleBack}>
+                  Voltar
+                </button>
+              )}
               {!isLastStep && (
                 <button className={styles.skipButton} onClick={handleSkip}>
-                  Skip Tutorial
+                  Pular Tutorial
                 </button>
               )}
               <button className={styles.nextButton} onClick={handleNext}>
-                {isLastStep ? "Get Started!" : "Next"}
+                {isLastStep ? "Começar!" : "Próximo"}
               </button>
             </div>
           </div>
