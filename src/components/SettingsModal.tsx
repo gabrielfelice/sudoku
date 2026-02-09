@@ -9,7 +9,13 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
-type PresetTheme = "default" | "high-contrast" | "color-blind";
+type PresetTheme =
+  | "default"
+  | "high-contrast"
+  | "color-blind"
+  | "noite-suave"
+  | "pastel"
+  | "neon-clean";
 
 const PRESET_THEMES: Record<PresetTheme, ThemeConfig> = {
   default: createDefaultTheme(),
@@ -34,6 +40,39 @@ const PRESET_THEMES: Record<PresetTheme, ThemeConfig> = {
     boardBorder: "#000000",
     hintPrimaryBg: "#fff9c4",
     hintSecondaryBg: "#fff59d",
+  },
+  "noite-suave": {
+    selectedCellBg: "#7c3aed",
+    peerCellBg: "#ddd6fe",
+    sameNumberOutline: "#6d28d9",
+    correctNumberColor: "#8b5cf6",
+    wrongNumberColor: "#f87171",
+    givenNumberColor: "#1f2937",
+    boardBorder: "#4c1d95",
+    hintPrimaryBg: "#c4b5fd",
+    hintSecondaryBg: "#ddd6fe",
+  },
+  pastel: {
+    selectedCellBg: "#fecaca",
+    peerCellBg: "#fef3c7",
+    sameNumberOutline: "#fb923c",
+    correctNumberColor: "#10b981",
+    wrongNumberColor: "#f87171",
+    givenNumberColor: "#374151",
+    boardBorder: "#f97316",
+    hintPrimaryBg: "#fed7aa",
+    hintSecondaryBg: "#fef3c7",
+  },
+  "neon-clean": {
+    selectedCellBg: "#22d3ee",
+    peerCellBg: "#1e293b",
+    sameNumberOutline: "#06b6d4",
+    correctNumberColor: "#10b981",
+    wrongNumberColor: "#f43f5e",
+    givenNumberColor: "#e2e8f0",
+    boardBorder: "#0891b2",
+    hintPrimaryBg: "#0e7490",
+    hintSecondaryBg: "#155e75",
   },
 };
 
@@ -219,6 +258,23 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
             <div className="flex items-center justify-between">
               <div>
+                <h3 className="font-medium">Ativar sons</h3>
+                <p className="text-sm text-gray-600">
+                  Reproduzir efeitos sonoros durante o jogo
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={config.soundEnabled}
+                onChange={(e) =>
+                  handleConfigChange("soundEnabled", e.target.checked)
+                }
+                className="h-5 w-5"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
                 <h3 className="font-medium">Limite de erros</h3>
                 <p className="text-sm text-gray-600">
                   Número máximo de erros permitidos por partida
@@ -251,7 +307,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <div className="space-y-4">
             <div>
               <h3 className="mb-2 font-medium">Temas Predefinidos</h3>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={() => handlePresetChange("default")}
                   className={`rounded px-4 py-2 ${
@@ -281,6 +337,36 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   }`}
                 >
                   Daltônico
+                </button>
+                <button
+                  onClick={() => handlePresetChange("noite-suave")}
+                  className={`rounded px-4 py-2 ${
+                    selectedPreset === "noite-suave"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200"
+                  }`}
+                >
+                  Noite Suave
+                </button>
+                <button
+                  onClick={() => handlePresetChange("pastel")}
+                  className={`rounded px-4 py-2 ${
+                    selectedPreset === "pastel"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200"
+                  }`}
+                >
+                  Pastel
+                </button>
+                <button
+                  onClick={() => handlePresetChange("neon-clean")}
+                  className={`rounded px-4 py-2 ${
+                    selectedPreset === "neon-clean"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200"
+                  }`}
+                >
+                  Neon Clean
                 </button>
               </div>
             </div>

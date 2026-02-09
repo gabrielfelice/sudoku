@@ -78,6 +78,12 @@ export default function HomePage() {
     }
   }, [dispatch]);
 
+  // Sync sound manager with config
+  useEffect(() => {
+    const { setSoundEnabled } = require("@/lib/sounds");
+    setSoundEnabled(gameState.config.soundEnabled);
+  }, [gameState.config.soundEnabled]);
+
   // Auto-save config and theme when they change
   useEffect(() => {
     if (!isInitialized) return;

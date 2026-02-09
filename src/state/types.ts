@@ -81,6 +81,7 @@ export interface PlayerConfig {
   showPeerHighlight: boolean;
   hintLimit: number | null; // null = unlimited, 3, 5, 10
   explanationLimit: number | null; // null = unlimited, 3, 5, 10
+  soundEnabled: boolean; // NEW: Enable/disable sound effects
 }
 
 export interface ThemeConfig {
@@ -183,6 +184,7 @@ export function createDefaultConfig(): PlayerConfig {
     showPeerHighlight: true,
     hintLimit: null, // NEW: Unlimited by default
     explanationLimit: null, // NEW: Unlimited by default
+    soundEnabled: true, // NEW: Sounds enabled by default
   };
 }
 

@@ -171,6 +171,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case "SELECT_CELL": {
+      // Play selection sound
+      if (typeof window !== "undefined" && state.config.soundEnabled) {
+        import("@/lib/sounds").then(({ playSound }) => playSound("select"));
+      }
       return { ...state, selectedIdx: action.idx };
     }
 
@@ -199,6 +203,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           // Correct answer
           newMeta[selectedIdx].status = "correct";
           newMeta[selectedIdx].notes = 0;
+
+          // Play correct sound
+          if (typeof window !== "undefined" && config.soundEnabled) {
+            import("@/lib/sounds").then(({ playSound }) =>
+              playSound("correct"),
+            );
+          }
 
           // Auto-lock if enabled
           if (config.autoLockOnCorrect) {
@@ -229,6 +240,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         } else {
           // Wrong answer: mark as wrong and increment mistakes
           newMeta[selectedIdx].status = "wrong";
+
+          // Play error sound
+          if (typeof window !== "undefined" && config.soundEnabled) {
+            import("@/lib/sounds").then(({ playSound }) => playSound("error"));
+          }
           const { history, cellHistory } = addToHistory(
             state,
             [selectedIdx],

@@ -4,6 +4,7 @@ import { useGameStore } from "@/state/store";
 import { CellValue } from "@/engine";
 import { explainHint } from "@/engine/explain";
 import { UndoMenu } from "@/components/UndoMenu";
+import { Switch } from "@/components/Switch";
 import { useState } from "react";
 
 export function ActionBar() {
@@ -33,10 +34,10 @@ export function ActionBar() {
     dispatch({ type: "SET_MODE", mode: mode === "note" ? "answer" : "note" });
   };
 
-  const handleToggleInspect = () => {
+  const handleToggleInspect = (enabled: boolean) => {
     dispatch({
       type: "SET_MODE",
-      mode: mode === "inspect" ? "answer" : "inspect",
+      mode: enabled ? "inspect" : "answer",
     });
   };
 
@@ -141,22 +142,13 @@ export function ActionBar() {
           Anotação
         </button>
 
-        <button
-          onClick={handleToggleInspect}
+        <Switch
+          checked={mode === "inspect"}
+          onChange={handleToggleInspect}
+          label="Investigador"
           disabled={isDisabled}
-          className={`
-            px-3 py-2 font-semibold rounded-lg transition-colors text-sm
-            ${
-              mode === "inspect"
-                ? "bg-yellow-600 text-white hover:bg-yellow-700 ring-2 ring-yellow-400"
-                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-            }
-            disabled:opacity-50 disabled:cursor-not-allowed
-          `}
-          title="Modo investigador (I)"
-        >
-          Investigador
-        </button>
+          className="text-sm"
+        />
 
         <button
           onClick={handleHint}
