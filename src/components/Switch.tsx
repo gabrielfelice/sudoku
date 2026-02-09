@@ -3,7 +3,7 @@
 export interface SwitchProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
-  label: string;
+  label?: string;
   disabled?: boolean;
   className?: string;
 }
@@ -11,7 +11,7 @@ export interface SwitchProps {
 export function Switch({
   checked,
   onChange,
-  label,
+  label = "",
   disabled = false,
   className = "",
 }: SwitchProps) {
@@ -51,7 +51,7 @@ export function Switch({
           />
         </span>
       </span>
-      <span>{label}</span>
+      {label && <span>{label}</span>}
     </button>
   );
 }
