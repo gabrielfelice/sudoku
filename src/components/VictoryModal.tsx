@@ -9,6 +9,7 @@ interface VictoryModalProps {
   difficulty: "easy" | "medium" | "hard" | "expert";
   seed?: number;
   newBadges: Badge[];
+  coinsEarned: number;
   onPlayAgain: () => void;
   onClose: () => void;
 }
@@ -26,6 +27,7 @@ export default function VictoryModal({
   difficulty,
   seed,
   newBadges,
+  coinsEarned,
   onPlayAgain,
   onClose,
 }: VictoryModalProps) {
@@ -61,6 +63,23 @@ export default function VictoryModal({
             </div>
           </div>
         </div>
+
+        {/* Coins Earned */}
+        {coinsEarned > 0 && (
+          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 my-4">
+            <div className="flex items-center justify-center gap-3">
+              <span className="text-4xl animate-bounce">🪙</span>
+              <div>
+                <div className="text-sm text-yellow-700 font-semibold">
+                  Coins Earned
+                </div>
+                <div className="text-3xl font-bold text-yellow-600">
+                  +{coinsEarned}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {newBadges.length > 0 && (
           <div className={styles.badges}>

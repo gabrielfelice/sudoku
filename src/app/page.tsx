@@ -32,7 +32,21 @@ import { Badge } from "@/lib/profile";
 // Milestone F components
 import { NewGameModal } from "@/components/NewGameModal";
 
-type View = "play" | "training" | "profile" | "lesson";
+// Milestone J components
+import { Shop } from "@/components/Shop";
+import { Goals } from "@/components/Goals";
+import { LearningCurve } from "@/components/LearningCurve";
+import { ModeSelector } from "@/components/ModeSelector";
+import { HelpPanel } from "@/components/HelpPanel";
+
+type View =
+  | "play"
+  | "training"
+  | "profile"
+  | "lesson"
+  | "shop"
+  | "goals"
+  | "stats";
 
 export default function HomePage() {
   const dispatch = useGameStore((s) => s.dispatch);
@@ -56,13 +70,21 @@ export default function HomePage() {
   const [showContinueModal, setShowContinueModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showNewGameModal, setShowNewGameModal] = useState(false);
+  const [showModeSelector, setShowModeSelector] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [showVictory, setShowVictory] = useState(false);
   const [victoryBadges, setVictoryBadges] = useState<Badge[]>([]);
+  const [victoryCoins, setVictoryCoins] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Apply theme
   useTheme();
+
+  // Set mounted state to prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Load saved config and theme on mount
   useEffect(() => {
@@ -141,13 +163,15 @@ export default function HomePage() {
 
     if (isSolved && !showVictory) {
       // Game completed!
-      const newBadges = finishGame(
+      const result = finishGame(
         currentSessionId,
         timer.elapsedMs,
         mistakes,
         true,
+        gameState.hintsUsedThisPuzzle,
       );
-      setVictoryBadges(newBadges);
+      setVictoryBadges(result.newBadges);
+      setVictoryCoins(result.coinsEarned);
       setShowVictory(true);
       dispatch({ type: "PAUSE" });
       dispatch({ type: "SET_SESSION_ID", sessionId: null });
@@ -164,7 +188,9 @@ export default function HomePage() {
     dispatch,
   ]);
 
-  const handleStartNewGame = () => {
+  const handleStartNewGame = (
+    playMode: "normal" | "zen" | "challenge" = "normal",
+  ) => {
     try {
       const puzzle = generatePuzzleWithCache(difficulty);
       dispatch({
@@ -175,6 +201,7 @@ export default function HomePage() {
           difficulty: puzzle.difficulty,
           seed: puzzle.seed,
           puzzleSource: "generated",
+          playMode,
         },
       });
 
@@ -246,12 +273,17 @@ export default function HomePage() {
 
   const handleVictoryPlayAgain = () => {
     setShowVictory(false);
-    handleStartNewGame();
+    setShowModeSelector(true);
   };
 
   const handleVictoryClose = () => {
     setShowVictory(false);
     dispatch({ type: "RESUME" });
+  };
+
+  const handleModeSelect = (mode: "normal" | "zen" | "challenge") => {
+    handleStartNewGame(mode);
+    setShowModeSelector(false);
   };
 
   return (
@@ -272,6 +304,7 @@ export default function HomePage() {
           difficulty={difficulty}
           seed={seed}
           newBadges={victoryBadges}
+          coinsEarned={victoryCoins}
           onPlayAgain={handleVictoryPlayAgain}
           onClose={handleVictoryClose}
         />
@@ -312,6 +345,14 @@ export default function HomePage() {
         />
       )}
 
+      {/* Mode Selector */}
+      {showModeSelector && (
+        <ModeSelector
+          onSelectMode={handleModeSelect}
+          onClose={() => setShowModeSelector(false)}
+        />
+      )}
+
       {/* Keyboard controller */}
       {view === "play" && <KeyboardController />}
 
@@ -321,13 +362,22 @@ export default function HomePage() {
         <nav className="bg-white dark:bg-gray-800 shadow-md">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-4">
                 <h1 className="text-2xl font-bold text-blue-600">Sudoku</h1>
+                {/* Coin Balance */}
+                {isMounted && (
+                  <div className="flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900 px-3 py-1 rounded-full">
+                    <span className="text-xl">🪙</span>
+                    <span className="font-bold text-yellow-800 dark:text-yellow-200">
+                      {profile.coins}
+                    </span>
+                  </div>
+                )}
               </div>
-              <div className="flex gap-4">
+              <div className="flex gap-2">
                 <button
                   onClick={() => setView("play")}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`px-3 py-2 rounded-lg font-medium transition-colors text-sm ${
                     view === "play"
                       ? "bg-blue-600 text-white"
                       : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -336,8 +386,38 @@ export default function HomePage() {
                   Play
                 </button>
                 <button
+                  onClick={() => setView("shop")}
+                  className={`px-3 py-2 rounded-lg font-medium transition-colors text-sm ${
+                    view === "shop"
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  🛒 Shop
+                </button>
+                <button
+                  onClick={() => setView("goals")}
+                  className={`px-3 py-2 rounded-lg font-medium transition-colors text-sm ${
+                    view === "goals"
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  🎯 Goals
+                </button>
+                <button
+                  onClick={() => setView("stats")}
+                  className={`px-3 py-2 rounded-lg font-medium transition-colors text-sm ${
+                    view === "stats"
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  📈 Stats
+                </button>
+                <button
                   onClick={() => setView("training")}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`px-3 py-2 rounded-lg font-medium transition-colors text-sm ${
                     view === "training" || view === "lesson"
                       ? "bg-blue-600 text-white"
                       : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -347,7 +427,7 @@ export default function HomePage() {
                 </button>
                 <button
                   onClick={() => setView("profile")}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`px-3 py-2 rounded-lg font-medium transition-colors text-sm ${
                     view === "profile"
                       ? "bg-blue-600 text-white"
                       : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -357,7 +437,7 @@ export default function HomePage() {
                 </button>
                 <button
                   onClick={() => setShowTutorial(true)}
-                  className="px-4 py-2 rounded-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="px-3 py-2 rounded-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm"
                   title="Show tutorial"
                 >
                   ❓
@@ -370,7 +450,7 @@ export default function HomePage() {
         {/* Content */}
         <div className="flex-1 p-4">
           {view === "play" && (
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-6xl mx-auto">
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
                 <TopBar />
 
@@ -392,11 +472,23 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                <div className="p-6 flex flex-col items-center gap-6 relative">
-                  {paused && <PauseOverlay />}
-                  <SudokuBoard />
-                  <ActionBar />
-                  <Keypad />
+                <div className="p-6">
+                  <div className="flex gap-6 w-full justify-center">
+                    {/* Main game area */}
+                    <div className="flex flex-col items-center gap-6">
+                      {/* Board with pause overlay */}
+                      <div className="relative">
+                        <SudokuBoard />
+                        {paused && <PauseOverlay />}
+                      </div>
+                      <ActionBar />
+                      <Keypad />
+                    </div>
+                    {/* Help Panel Sidebar */}
+                    <div className="w-64 flex-shrink-0">
+                      <HelpPanel />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -415,6 +507,16 @@ export default function HomePage() {
           )}
 
           {view === "profile" && <ProfilePage />}
+
+          {view === "shop" && (
+            <div className="max-w-7xl mx-auto">
+              <Shop onClose={() => setView("play")} />
+            </div>
+          )}
+
+          {view === "goals" && <Goals />}
+
+          {view === "stats" && <LearningCurve />}
         </div>
       </div>
     </>

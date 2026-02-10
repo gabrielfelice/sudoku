@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useGameStore } from "@/state/store";
+import { useProfileStore } from "@/state/profileStore";
 import {
   useCustomizationStore,
   commitCustomization,
@@ -9,6 +10,7 @@ import {
 import { PlayerConfig, ThemeConfig, createDefaultTheme } from "@/state/types";
 import { SudokuPreview } from "./SudokuPreview";
 import { Switch } from "./Switch";
+import { getItemById, getThemeConfig } from "@/lib/shop";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -86,6 +88,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const config = useGameStore((s) => s.config);
   const theme = useGameStore((s) => s.theme);
   const dispatch = useGameStore((s) => s.dispatch);
+  const profile = useProfileStore((s) => s.profile);
 
   const {
     draftConfig,
@@ -330,12 +333,82 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <option value="5">5</option>
                     </select>
                   </div>
+
+                  {/* Milestone J: Help Items Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">Ativar itens de ajuda</h3>
+                      <p className="text-sm text-gray-600">
+                        Permitir uso de itens de ajuda comprados na loja
+                      </p>
+                    </div>
+                    <Switch
+                      checked={draftConfig.helpEnabled}
+                      onChange={(checked) =>
+                        handleConfigChange("helpEnabled", checked)
+                      }
+                    />
+                  </div>
+
+                  {/* Milestone J: Expert Hint Limit */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">Limite de dicas (Expert)</h3>
+                      <p className="text-sm text-gray-600">
+                        Máximo de dicas permitidas em puzzles Expert (1-3)
+                      </p>
+                    </div>
+                    <select
+                      value={draftConfig.expertHintLimit}
+                      onChange={(e) =>
+                        handleConfigChange(
+                          "expertHintLimit",
+                          parseInt(e.target.value),
+                        )
+                      }
+                      className="rounded border px-3 py-1"
+                    >
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                    </select>
+                  </div>
                 </div>
               )}
 
               {/* Theme Tab */}
               {activeTab === "theme" && (
                 <div className="space-y-4">
+                  {/* Purchased Themes */}
+                  {profile.inventory.themes.length > 0 && (
+                    <div>
+                      <h3 className="mb-2 font-medium">🛒 Temas Comprados</h3>
+                      <div className="flex gap-2 flex-wrap">
+                        {profile.inventory.themes.map((themeId) => {
+                          const item = getItemById(themeId);
+                          if (!item) return null;
+                          return (
+                            <button
+                              key={themeId}
+                              onClick={() => {
+                                const themeConfig = getThemeConfig(themeId);
+                                if (themeConfig) {
+                                  updateDraftTheme(themeConfig);
+                                }
+                              }}
+                              className="rounded px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white hover:from-yellow-500 hover:to-yellow-600 font-medium"
+                            >
+                              ✨ {item.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500">
+                        Clique em um tema para aplicá-lo
+                      </div>
+                    </div>
+                  )}
+
                   <div>
                     <h3 className="mb-2 font-medium">Temas Predefinidos</h3>
                     <div className="flex gap-2 flex-wrap">

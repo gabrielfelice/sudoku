@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGameStore } from "@/state/store";
 import { useProfileStore } from "@/state/profileStore";
 import { Digit } from "@/engine";
@@ -13,6 +13,12 @@ export function HelpPanel() {
   const profile = useProfileStore((s) => s.profile);
 
   const [showDigitSelector, setShowDigitSelector] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Set mounted state to prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const hasFilterItem =
     profile.inventory.helpItems.includes("candidate_filter") ||
@@ -61,7 +67,7 @@ export function HelpPanel() {
       )}
 
       {/* Candidate Filter */}
-      {hasFilterItem && (
+      {isMounted && hasFilterItem && (
         <div className="mb-3">
           <button
             onClick={() => setShowDigitSelector(!showDigitSelector)}
@@ -86,7 +92,7 @@ export function HelpPanel() {
       )}
 
       {/* Clean Invalid Notes */}
-      {hasCleanItem && (
+      {isMounted && hasCleanItem && (
         <button
           onClick={handleCleanNotes}
           className="w-full bg-green-500 text-white py-2 px-4 rounded font-semibold hover:bg-green-600 transition-colors"
@@ -96,7 +102,7 @@ export function HelpPanel() {
       )}
 
       {/* No Items Message */}
-      {!hasFilterItem && !hasCleanItem && (
+      {isMounted && !hasFilterItem && !hasCleanItem && (
         <div className="text-center text-gray-500 py-4">
           <p className="text-sm">No help items owned.</p>
           <p className="text-xs mt-1">Visit the shop to purchase items!</p>
