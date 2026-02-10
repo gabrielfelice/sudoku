@@ -11,6 +11,7 @@ export interface CellMeta {
 
 export type GameMode = "answer" | "note" | "inspect";
 export type PlayMode = "normal" | "zen" | "challenge";
+export type Difficulty = "easy" | "medium" | "hard" | "expert";
 
 export interface TimerState {
   elapsedMs: number;
@@ -107,7 +108,7 @@ export interface GameState {
   meta: CellMeta[];
 
   // Puzzle metadata
-  difficulty: "easy" | "medium" | "hard" | "expert";
+  difficulty: Difficulty;
   seed?: number;
   puzzleSource: "generated" | "catalog" | "daily";
   puzzleId?: string;

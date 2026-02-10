@@ -1,18 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { PlayMode } from "@/state/types";
+import { PlayMode, Difficulty } from "@/state/types";
 
 interface ModeSelectorProps {
-  onSelectMode: (mode: PlayMode) => void;
+  onSelectMode: (mode: PlayMode, difficulty: Difficulty) => void;
   onClose: () => void;
 }
 
 export function ModeSelector({ onSelectMode, onClose }: ModeSelectorProps) {
   const [selectedMode, setSelectedMode] = useState<PlayMode>("normal");
+  const [selectedDifficulty, setSelectedDifficulty] =
+    useState<Difficulty>("medium");
+
+  const difficulties: Array<{
+    value: Difficulty;
+    label: string;
+    color: string;
+  }> = [
+    { value: "easy", label: "Fácil", color: "bg-green-500" },
+    { value: "medium", label: "Médio", color: "bg-yellow-500" },
+    { value: "hard", label: "Difícil", color: "bg-orange-500" },
+    { value: "expert", label: "Expert", color: "bg-red-500" },
+  ];
 
   const handleConfirm = () => {
-    onSelectMode(selectedMode);
+    onSelectMode(selectedMode, selectedDifficulty);
     onClose();
   };
 
@@ -100,6 +113,26 @@ export function ModeSelector({ onSelectMode, onClose }: ModeSelectorProps) {
               )}
             </div>
           </button>
+        </div>
+
+        {/* Difficulty Selector */}
+        <div className="mb-6">
+          <h3 className="text-lg font-bold mb-3">Select Difficulty</h3>
+          <div className="flex gap-2">
+            {difficulties.map((diff) => (
+              <button
+                key={diff.value}
+                onClick={() => setSelectedDifficulty(diff.value)}
+                className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-all ${
+                  selectedDifficulty === diff.value
+                    ? `${diff.color} text-white shadow-md`
+                    : "border-2 border-gray-200 text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                {diff.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex gap-3">

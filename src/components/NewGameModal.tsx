@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useGameStore } from "@/state/store";
+import { PlayMode } from "@/state/types";
 import {
   getPuzzlesByDifficulty,
   getDailyPuzzle,
@@ -23,6 +24,7 @@ export function NewGameModal({ isOpen, onClose }: NewGameModalProps) {
     "generate",
   );
   const [selectedDifficulty, setSelectedDifficulty] = useState(difficulty);
+  const [selectedMode, setSelectedMode] = useState<PlayMode>("normal");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [selectedPuzzle, setSelectedPuzzle] = useState<CuratedPuzzle | null>(
     null,
@@ -40,6 +42,7 @@ export function NewGameModal({ isOpen, onClose }: NewGameModalProps) {
         difficulty: selectedDifficulty,
         seed: puzzle.seed,
         puzzleSource: "generated",
+        playMode: selectedMode,
       },
     });
     onClose();
@@ -55,6 +58,7 @@ export function NewGameModal({ isOpen, onClose }: NewGameModalProps) {
         difficulty: selectedPuzzle.difficulty,
         puzzleSource: "catalog",
         puzzleId: selectedPuzzle.id,
+        playMode: selectedMode,
       },
     });
     onClose();
@@ -70,6 +74,7 @@ export function NewGameModal({ isOpen, onClose }: NewGameModalProps) {
         difficulty: dailyPuzzle.difficulty,
         puzzleSource: "daily",
         puzzleId: dailyPuzzle.id,
+        playMode: selectedMode,
       },
     });
     onClose();
@@ -171,6 +176,45 @@ export function NewGameModal({ isOpen, onClose }: NewGameModalProps) {
                     {diff === "expert" && "Expert"}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Mode Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Modo de Jogo
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setSelectedMode("normal")}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    selectedMode === "normal"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  🎯 Normal
+                </button>
+                <button
+                  onClick={() => setSelectedMode("zen")}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    selectedMode === "zen"
+                      ? "bg-purple-600 text-white"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  🧘 Zen
+                </button>
+                <button
+                  onClick={() => setSelectedMode("challenge")}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    selectedMode === "challenge"
+                      ? "bg-red-600 text-white"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  ⚡ Desafio
+                </button>
               </div>
             </div>
 
@@ -287,6 +331,45 @@ export function NewGameModal({ isOpen, onClose }: NewGameModalProps) {
               ))}
             </div>
 
+            {/* Mode Selection */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Modo de Jogo
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setSelectedMode("normal")}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    selectedMode === "normal"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  🎯 Normal
+                </button>
+                <button
+                  onClick={() => setSelectedMode("zen")}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    selectedMode === "zen"
+                      ? "bg-purple-600 text-white"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  🧘 Zen
+                </button>
+                <button
+                  onClick={() => setSelectedMode("challenge")}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    selectedMode === "challenge"
+                      ? "bg-red-600 text-white"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  ⚡ Desafio
+                </button>
+              </div>
+            </div>
+
             <button
               onClick={handleStartCatalog}
               disabled={!selectedPuzzle}
@@ -357,6 +440,45 @@ export function NewGameModal({ isOpen, onClose }: NewGameModalProps) {
                     {tag}
                   </span>
                 ))}
+              </div>
+            </div>
+
+            {/* Mode Selection */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Modo de Jogo
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setSelectedMode("normal")}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    selectedMode === "normal"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  🎯 Normal
+                </button>
+                <button
+                  onClick={() => setSelectedMode("zen")}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    selectedMode === "zen"
+                      ? "bg-purple-600 text-white"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  🧘 Zen
+                </button>
+                <button
+                  onClick={() => setSelectedMode("challenge")}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    selectedMode === "challenge"
+                      ? "bg-red-600 text-white"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  ⚡ Desafio
+                </button>
               </div>
             </div>
 

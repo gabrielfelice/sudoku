@@ -18,7 +18,6 @@ import { ContinueGameModal } from "@/components/ContinueGameModal";
 import { KeyboardController } from "@/components/KeyboardController";
 import { HintModal } from "@/components/HintModal";
 import { ErrorExplanationModal } from "@/components/ErrorExplanationModal";
-import { DifficultySelector } from "@/components/DifficultySelector";
 import { SettingsModal } from "@/components/SettingsModal";
 
 // Milestone E components
@@ -190,6 +189,7 @@ export default function HomePage() {
 
   const handleStartNewGame = (
     playMode: "normal" | "zen" | "challenge" = "normal",
+    difficulty: "easy" | "medium" | "hard" | "expert" = "medium",
   ) => {
     try {
       const puzzle = generatePuzzleWithCache(difficulty);
@@ -281,8 +281,11 @@ export default function HomePage() {
     dispatch({ type: "RESUME" });
   };
 
-  const handleModeSelect = (mode: "normal" | "zen" | "challenge") => {
-    handleStartNewGame(mode);
+  const handleModeSelect = (
+    mode: "normal" | "zen" | "challenge",
+    difficulty: "easy" | "medium" | "hard" | "expert",
+  ) => {
+    handleStartNewGame(mode, difficulty);
     setShowModeSelector(false);
   };
 
@@ -455,7 +458,20 @@ export default function HomePage() {
                 <TopBar />
 
                 <div className="px-6 pt-4 pb-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                  <DifficultySelector />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowModeSelector(true)}
+                      className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      🎮 New Game
+                    </button>
+                    <button
+                      onClick={() => setShowNewGameModal(true)}
+                      className="px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                      ⚙️ Advanced Options
+                    </button>
+                  </div>
                   <div className="flex items-center gap-3">
                     {seed && (
                       <div className="text-xs text-gray-500 dark:text-gray-400">
