@@ -7,6 +7,14 @@ import {
   recordGameFinish,
   checkAndAwardBadges,
   Badge,
+  awardCoins,
+  spendCoins,
+  getCoinsForDifficulty,
+  updateGoalProgress,
+  addCustomGoal,
+  Goal,
+  createCustomGoal,
+  recordLearningData,
 } from "@/lib/profile";
 import { GameState } from "./types";
 
@@ -19,9 +27,20 @@ interface ProfileStore {
     timeMs: number,
     mistakes: number,
     completed: boolean,
-  ) => Badge[];
+    hintsUsed: number,
+  ) => { newBadges: Badge[]; coinsEarned: number; completedGoals: Goal[] };
   completeTutorial: () => void;
   completeLesson: (lessonId: string) => void;
+  purchaseItem: (
+    itemId: string,
+    price: number,
+    category: "helpItems" | "themes",
+  ) => boolean;
+  addGoal: (
+    type: Goal["type"],
+    target: number,
+    difficulty?: "easy" | "medium" | "hard" | "expert",
+  ) => void;
   refresh: () => void;
 }
 
@@ -47,7 +66,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     return sessionId;
   },
 
-  finishGame: (sessionId, timeMs, mistakes, completed) => {
+  finishGame: (sessionId, timeMs, mistakes, completed, hintsUsed) => {
     let profile = recordGameFinish(
       get().profile,
       sessionId,
@@ -59,16 +78,39 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     // Check for new badges
     const session = profile.recentGames.find((g) => g.id === sessionId);
     let newBadges: Badge[] = [];
+    let coinsEarned = 0;
+    let completedGoals: Goal[] = [];
 
     if (session) {
       const result = checkAndAwardBadges(profile, session);
       profile = result.profile;
       newBadges = result.newBadges;
+
+      // Award coins on completion
+      if (completed) {
+        const coins = getCoinsForDifficulty(session.difficulty);
+        profile = awardCoins(
+          profile,
+          coins,
+          `Completed ${session.difficulty} puzzle`,
+        );
+        coinsEarned = coins;
+      }
+
+      // Update goals
+      const beforeGoals = profile.goals;
+      profile = updateGoalProgress(profile, session);
+      completedGoals = profile.goals.filter(
+        (g, i) => g.completed && !beforeGoals[i].completed,
+      );
+
+      // Record learning data
+      profile = recordLearningData(profile, session, hintsUsed);
     }
 
     saveProfile(profile);
     set({ profile });
-    return newBadges;
+    return { newBadges, coinsEarned, completedGoals };
   },
 
   completeTutorial: () => {
@@ -91,6 +133,33 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       saveProfile(updated);
       return { profile: updated };
     });
+  },
+
+  purchaseItem: (itemId, price, category) => {
+    const result = spendCoins(get().profile, price, `Purchased ${itemId}`);
+
+    if (!result.success) {
+      return false;
+    }
+
+    const updated = {
+      ...result.profile,
+      inventory: {
+        ...result.profile.inventory,
+        [category]: [...result.profile.inventory[category], itemId],
+      },
+    };
+
+    saveProfile(updated);
+    set({ profile: updated });
+    return true;
+  },
+
+  addGoal: (type, target, difficulty) => {
+    const goal = createCustomGoal(type, target, difficulty);
+    const updated = addCustomGoal(get().profile, goal);
+    saveProfile(updated);
+    set({ profile: updated });
   },
 
   refresh: () => {

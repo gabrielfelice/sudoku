@@ -10,6 +10,7 @@ export interface CellMeta {
 }
 
 export type GameMode = "answer" | "note" | "inspect";
+export type PlayMode = "normal" | "zen" | "challenge";
 
 export interface TimerState {
   elapsedMs: number;
@@ -81,7 +82,9 @@ export interface PlayerConfig {
   showPeerHighlight: boolean;
   hintLimit: number | null; // null = unlimited, 3, 5, 10
   explanationLimit: number | null; // null = unlimited, 3, 5, 10
-  soundEnabled: boolean; // NEW: Enable/disable sound effects
+  soundEnabled: boolean;
+  helpEnabled: boolean; // NEW: Enable/disable help items
+  expertHintLimit: number; // NEW: Max hints for expert (default 3, can reduce)
 }
 
 export interface ThemeConfig {
@@ -106,8 +109,11 @@ export interface GameState {
   // Puzzle metadata
   difficulty: "easy" | "medium" | "hard" | "expert";
   seed?: number;
-  puzzleSource: "generated" | "catalog" | "daily"; // NEW: Track puzzle origin
-  puzzleId?: string; // NEW: ID if from catalog
+  puzzleSource: "generated" | "catalog" | "daily";
+  puzzleId?: string;
+
+  // Play mode (NEW)
+  playMode: PlayMode;
 
   // UI state
   selectedIdx: number | null;
@@ -118,6 +124,7 @@ export interface GameState {
 
   // Hint system
   hint: HintState | null;
+  hintsUsedThisPuzzle: number; // NEW: Track hints used
 
   // Error explanation
   errorExplanation: ErrorExplanationState | null;
@@ -127,7 +134,7 @@ export interface GameState {
 
   // History for undo
   history: HistoryEntry[];
-  cellHistory: Map<number, HistoryEntry[]>; // NEW: Per-cell history
+  cellHistory: Map<number, HistoryEntry[]>;
 
   // Player configuration
   config: PlayerConfig;
@@ -145,18 +152,18 @@ export interface GameState {
     allowedTechniques: string[];
   };
 
-  // Usage tracking (NEW)
+  // Usage tracking
   hintUsageCount: number;
   explanationUsageCount: number;
 
-  // Telemetry (NEW - local only)
+  // Telemetry (local only)
   telemetry: {
-    actionTimestamps: number[]; // Last N action timestamps
+    actionTimestamps: number[];
     errorCount: number;
     hintCount: number;
   };
 
-  // Cloud profile (NEW - optional)
+  // Cloud profile (optional)
   cloudProfile?: {
     userId: string;
     syncStatus: "synced" | "syncing" | "error" | "local";
@@ -182,9 +189,11 @@ export function createDefaultConfig(): PlayerConfig {
     maxErrors: null,
     showSameNumberHighlight: true,
     showPeerHighlight: true,
-    hintLimit: null, // NEW: Unlimited by default
-    explanationLimit: null, // NEW: Unlimited by default
-    soundEnabled: true, // NEW: Sounds enabled by default
+    hintLimit: null,
+    explanationLimit: null,
+    soundEnabled: true,
+    helpEnabled: true, // NEW: Help enabled by default
+    expertHintLimit: 3, // NEW: Expert max 3 hints
   };
 }
 
@@ -212,14 +221,16 @@ export function createInitialState(): GameState {
       .map(() => createInitialMeta()),
     difficulty: "medium",
     seed: undefined,
-    puzzleSource: "generated", // NEW
-    puzzleId: undefined, // NEW
+    puzzleSource: "generated",
+    puzzleId: undefined,
+    playMode: "normal", // NEW
     selectedIdx: null,
     mode: "answer",
     mistakes: 0,
     paused: false,
     toast: null,
     hint: null,
+    hintsUsedThisPuzzle: 0, // NEW
     errorExplanation: null,
     timer: {
       elapsedMs: 0,
@@ -227,7 +238,7 @@ export function createInitialState(): GameState {
       lastTick: Date.now(),
     },
     history: [],
-    cellHistory: new Map(), // NEW
+    cellHistory: new Map(),
     config: createDefaultConfig(),
     theme: createDefaultTheme(),
     currentSessionId: null,
@@ -236,14 +247,13 @@ export function createInitialState(): GameState {
       lessonId: null,
       allowedTechniques: [],
     },
-    hintUsageCount: 0, // NEW
-    explanationUsageCount: 0, // NEW
+    hintUsageCount: 0,
+    explanationUsageCount: 0,
     telemetry: {
-      // NEW
       actionTimestamps: [],
       errorCount: 0,
       hintCount: 0,
     },
-    cloudProfile: undefined, // NEW
+    cloudProfile: undefined,
   };
 }

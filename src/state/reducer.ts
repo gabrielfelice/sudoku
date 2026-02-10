@@ -7,8 +7,9 @@ import {
   removeNote,
   cleanInvalidNotes,
   removeDigitFromPeers,
+  initializeCandidates,
 } from "@/engine";
-import { GameState, CellMeta, GameMode, HistoryEntry } from "./types";
+import { GameState, CellMeta, GameMode, HistoryEntry, PlayMode } from "./types";
 
 export type GameAction =
   | {
@@ -17,16 +18,18 @@ export type GameAction =
       solution: CellValue[];
       difficulty?: "easy" | "medium" | "hard" | "expert";
       seed?: number;
-      puzzleSource?: "generated" | "catalog" | "daily"; // NEW
-      puzzleId?: string; // NEW
+      puzzleSource?: "generated" | "catalog" | "daily";
+      puzzleId?: string;
+      playMode?: PlayMode; // NEW
     }
   | { type: "SELECT_CELL"; idx: number | null }
   | { type: "SET_MODE"; mode: GameMode }
+  | { type: "SET_PLAY_MODE"; playMode: PlayMode } // NEW
   | { type: "INPUT_DIGIT"; digit: Digit }
   | { type: "ERASE_NOTES" }
   | { type: "CLEAR_CELL" }
   | { type: "UNDO" }
-  | { type: "UNDO_CELL" } // NEW: Undo last action for selected cell
+  | { type: "UNDO_CELL" }
   | { type: "TOGGLE_PAUSE" }
   | { type: "PAUSE" }
   | { type: "RESUME" }
@@ -35,13 +38,15 @@ export type GameAction =
   | { type: "SHOW_HINT"; hint: import("./types").HintState }
   | { type: "CLOSE_HINT" }
   | { type: "APPLY_HINT" }
-  | { type: "NEXT_HINT_STEP" } // NEW: Navigate to next hint step
-  | { type: "PREV_HINT_STEP" } // NEW: Navigate to previous hint step
-  | { type: "APPLY_HINT_STEP" } // NEW: Apply current hint step
+  | { type: "NEXT_HINT_STEP" }
+  | { type: "PREV_HINT_STEP" }
+  | { type: "APPLY_HINT_STEP" }
+  | { type: "APPLY_CANDIDATE_FILTER"; digit: Digit } // NEW: Visual overlay
+  | { type: "CLEAN_INVALID_NOTES" } // NEW: Remove invalid notes
   | { type: "SHOW_ERROR_EXPLANATION" }
-  | { type: "SHOW_ADVANCED_ERROR_EXPLANATION" } // NEW: Multi-layer explanation
-  | { type: "NEXT_EXPLANATION_LAYER" } // NEW: Navigate explanation layers
-  | { type: "PREV_EXPLANATION_LAYER" } // NEW: Navigate explanation layers
+  | { type: "SHOW_ADVANCED_ERROR_EXPLANATION" }
+  | { type: "NEXT_EXPLANATION_LAYER" }
+  | { type: "PREV_EXPLANATION_LAYER" }
   | { type: "CLOSE_ERROR_EXPLANATION" }
   | {
       type: "SET_DIFFICULTY";
@@ -54,8 +59,9 @@ export type GameAction =
         solution: CellValue[];
         difficulty?: "easy" | "medium" | "hard" | "expert";
         seed?: number;
-        puzzleSource?: "generated" | "catalog" | "daily"; // NEW
-        puzzleId?: string; // NEW
+        puzzleSource?: "generated" | "catalog" | "daily";
+        puzzleId?: string;
+        playMode?: PlayMode; // NEW
       };
     }
   | {
@@ -93,11 +99,11 @@ export type GameAction =
         allowedTechniques: string[];
       };
     }
-  | { type: "INCREMENT_HINT_USAGE" } // NEW
-  | { type: "INCREMENT_EXPLANATION_USAGE" } // NEW
-  | { type: "RECORD_TELEMETRY"; actionType: string } // NEW
+  | { type: "INCREMENT_HINT_USAGE" }
+  | { type: "INCREMENT_EXPLANATION_USAGE" }
+  | { type: "RECORD_TELEMETRY"; actionType: string }
   | {
-      type: "SET_CLOUD_PROFILE"; // NEW
+      type: "SET_CLOUD_PROFILE";
       userId: string;
       syncStatus: "synced" | "syncing" | "error" | "local";
     };
@@ -133,8 +139,15 @@ function addToHistory(
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "INIT_PUZZLE": {
-      const { given, solution, difficulty, seed, puzzleSource, puzzleId } =
-        action;
+      const {
+        given,
+        solution,
+        difficulty,
+        seed,
+        puzzleSource,
+        puzzleId,
+        playMode,
+      } = action;
       const values = [...given];
       const meta: CellMeta[] = given.map((val, idx) => ({
         isGiven: val !== 0,
@@ -153,10 +166,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         seed,
         puzzleSource: puzzleSource || "generated",
         puzzleId,
+        playMode: playMode || "normal", // NEW
         selectedIdx: null,
         mistakes: 0,
         paused: false,
         hint: null,
+        hintsUsedThisPuzzle: 0, // NEW
         errorExplanation: null,
         history: [],
         cellHistory: new Map(),
@@ -472,9 +487,26 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case "SHOW_HINT": {
+      // Check hint limits
+      const { difficulty, config, hintsUsedThisPuzzle } = state;
+
+      // Expert difficulty has special limit
+      if (difficulty === "expert") {
+        if (hintsUsedThisPuzzle >= config.expertHintLimit) {
+          return {
+            ...state,
+            toast: {
+              message: `Hint limit reached (${hintsUsedThisPuzzle}/${config.expertHintLimit})`,
+              type: "warning",
+            },
+          };
+        }
+      }
+
       return {
         ...state,
         hint: action.hint,
+        hintsUsedThisPuzzle: hintsUsedThisPuzzle + 1,
       };
     }
 
@@ -669,8 +701,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "NEW_GAME": {
       if (!action.payload) return state;
-      const { given, solution, difficulty, seed, puzzleSource, puzzleId } =
-        action.payload;
+      const {
+        given,
+        solution,
+        difficulty,
+        seed,
+        puzzleSource,
+        puzzleId,
+        playMode,
+      } = action.payload;
       const values = [...given];
       const meta: CellMeta[] = given.map((val) => ({
         isGiven: val !== 0,
@@ -689,12 +728,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         seed,
         puzzleSource: puzzleSource || "generated",
         puzzleId,
+        playMode: playMode || "normal", // NEW
         selectedIdx: null,
         mode: "answer",
         mistakes: 0,
         paused: false,
         toast: null,
         hint: null,
+        hintsUsedThisPuzzle: 0, // NEW
         errorExplanation: null,
         history: [],
         cellHistory: new Map(),
@@ -913,6 +954,120 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           userId: action.userId,
           syncStatus: action.syncStatus,
           lastSyncTime: Date.now(),
+        },
+      };
+    }
+
+    case "SET_PLAY_MODE": {
+      return {
+        ...state,
+        playMode: action.playMode,
+      };
+    }
+
+    case "APPLY_CANDIDATE_FILTER": {
+      // Visual overlay showing where a digit is a valid candidate
+      // This doesn't modify the board, just creates a visual hint
+      const { digit } = action;
+      const { values, config } = state;
+
+      if (!config.helpEnabled) {
+        return {
+          ...state,
+          toast: {
+            message: "Help items are disabled in settings",
+            type: "warning",
+          },
+        };
+      }
+
+      // Get valid candidates for all cells
+      const validCandidates = initializeCandidates(values);
+      const highlightCells: number[] = [];
+
+      for (let idx = 0; idx < 81; idx++) {
+        if (values[idx] === 0) {
+          // Check if this digit is a valid candidate
+          const bit = 1 << (digit - 1);
+          if ((validCandidates[idx] & bit) !== 0) {
+            highlightCells.push(idx);
+          }
+        }
+      }
+
+      // Show as a hint overlay
+      return {
+        ...state,
+        hint: {
+          visible: true,
+          techniqueName: "candidate-filter",
+          explanation: `Cells where ${digit} is a valid candidate are highlighted.`,
+          highlight: {
+            primary: highlightCells,
+            secondary: [],
+          },
+        },
+        hintsUsedThisPuzzle: state.hintsUsedThisPuzzle + 1,
+      };
+    }
+
+    case "CLEAN_INVALID_NOTES": {
+      const { meta, values, config } = state;
+
+      if (!config.helpEnabled) {
+        return {
+          ...state,
+          toast: {
+            message: "Help items are disabled in settings",
+            type: "warning",
+          },
+        };
+      }
+
+      const currentNotes = meta.map((m) => m.notes);
+      const cleanedNotes = cleanInvalidNotes(values, currentNotes);
+
+      // Find which cells were affected
+      const affectedIndices: number[] = [];
+      const previousMeta: CellMeta[] = [];
+
+      cleanedNotes.forEach((notes, idx) => {
+        if (notes !== currentNotes[idx]) {
+          affectedIndices.push(idx);
+          previousMeta.push({ ...meta[idx] });
+        }
+      });
+
+      if (affectedIndices.length === 0) {
+        return {
+          ...state,
+          toast: {
+            message: "No invalid notes found",
+            type: "info",
+          },
+        };
+      }
+
+      const newMeta = meta.map((m, idx) => ({
+        ...m,
+        notes: cleanedNotes[idx],
+      }));
+
+      const { history, cellHistory } = addToHistory(
+        state,
+        affectedIndices,
+        affectedIndices.map((idx) => values[idx]),
+        previousMeta,
+      );
+
+      return {
+        ...state,
+        meta: newMeta,
+        history,
+        cellHistory,
+        toast: {
+          message: `Cleaned ${affectedIndices.length} cell(s)`,
+          type: "success",
         },
       };
     }

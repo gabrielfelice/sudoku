@@ -17,6 +17,10 @@ export interface DifficultyStats {
   bestTimeMs: number | null;
   avgMistakes: number;
   avgTimeMs: number;
+  // Learning curve tracking
+  timeHistory: Array<{ date: number; avgTime: number }>;
+  errorHistory: Array<{ date: number; avgErrors: number }>;
+  hintHistory: Array<{ date: number; avgHints: number }>;
 }
 
 export interface Badge {
@@ -26,18 +30,62 @@ export interface Badge {
   earnedAt: number;
 }
 
+export interface CoinTransaction {
+  id: string;
+  type: "earn" | "spend";
+  amount: number;
+  reason: string;
+  timestamp: number;
+}
+
+export interface Goal {
+  id: string;
+  type: "puzzles_by_difficulty" | "time_target" | "error_limit" | "streak";
+  difficulty?: "easy" | "medium" | "hard" | "expert";
+  target: number;
+  current: number;
+  completed: boolean;
+  custom: boolean;
+  createdAt: number;
+  completedAt?: number;
+}
+
 export interface PlayerProfile {
   name: string;
   createdAt: number;
   lastPlayedAt: number;
+
+  // Economy
+  coins: number;
+  coinLedger: CoinTransaction[];
+  inventory: {
+    helpItems: string[]; // IDs of purchased help items
+    themes: string[]; // IDs of purchased themes
+  };
+
+  // Stats by game mode
   stats: {
     easy: DifficultyStats;
     medium: DifficultyStats;
     hard: DifficultyStats;
     expert: DifficultyStats;
   };
+  zenStats: {
+    easy: DifficultyStats;
+    medium: DifficultyStats;
+    hard: DifficultyStats;
+    expert: DifficultyStats;
+  };
+  challengeStats: {
+    easy: DifficultyStats;
+    medium: DifficultyStats;
+    hard: DifficultyStats;
+    expert: DifficultyStats;
+  };
+
   recentGames: GameSessionRecord[];
   badges: Badge[];
+  goals: Goal[];
   tutorialCompleted: boolean;
   lessonsCompleted: string[];
 }
@@ -48,7 +96,7 @@ export interface ProfileStorage {
 }
 
 const STORAGE_KEY = "sudoku_profile";
-const CURRENT_SCHEMA_VERSION = 1;
+const CURRENT_SCHEMA_VERSION = 2; // Updated for Milestone J
 
 export function createDefaultDifficultyStats(): DifficultyStats {
   return {
@@ -57,6 +105,9 @@ export function createDefaultDifficultyStats(): DifficultyStats {
     bestTimeMs: null,
     avgMistakes: 0,
     avgTimeMs: 0,
+    timeHistory: [],
+    errorHistory: [],
+    hintHistory: [],
   };
 }
 
@@ -65,7 +116,25 @@ export function createDefaultProfile(): PlayerProfile {
     name: "Player",
     createdAt: Date.now(),
     lastPlayedAt: Date.now(),
+    coins: 100, // Starting balance
+    coinLedger: [],
+    inventory: {
+      helpItems: [],
+      themes: [],
+    },
     stats: {
+      easy: createDefaultDifficultyStats(),
+      medium: createDefaultDifficultyStats(),
+      hard: createDefaultDifficultyStats(),
+      expert: createDefaultDifficultyStats(),
+    },
+    zenStats: {
+      easy: createDefaultDifficultyStats(),
+      medium: createDefaultDifficultyStats(),
+      hard: createDefaultDifficultyStats(),
+      expert: createDefaultDifficultyStats(),
+    },
+    challengeStats: {
       easy: createDefaultDifficultyStats(),
       medium: createDefaultDifficultyStats(),
       hard: createDefaultDifficultyStats(),
@@ -73,6 +142,7 @@ export function createDefaultProfile(): PlayerProfile {
     },
     recentGames: [],
     badges: [],
+    goals: createDefaultGoals(),
     tutorialCompleted: false,
     lessonsCompleted: [],
   };
@@ -283,5 +353,269 @@ export function checkAndAwardBadges(
       badges: [...profile.badges, ...newBadges],
     },
     newBadges,
+  };
+}
+
+// ============================================================================
+// ECONOMY SYSTEM
+// ============================================================================
+
+const COIN_REWARDS: Record<"easy" | "medium" | "hard" | "expert", number> = {
+  easy: 10,
+  medium: 20,
+  hard: 35,
+  expert: 50,
+};
+
+export function awardCoins(
+  profile: PlayerProfile,
+  amount: number,
+  reason: string,
+): PlayerProfile {
+  const transaction: CoinTransaction = {
+    id: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    type: "earn",
+    amount,
+    reason,
+    timestamp: Date.now(),
+  };
+
+  return {
+    ...profile,
+    coins: profile.coins + amount,
+    coinLedger: [...profile.coinLedger, transaction].slice(-100), // Keep last 100 transactions
+  };
+}
+
+export function spendCoins(
+  profile: PlayerProfile,
+  amount: number,
+  reason: string,
+): { success: boolean; profile: PlayerProfile } {
+  if (profile.coins < amount) {
+    return { success: false, profile };
+  }
+
+  const transaction: CoinTransaction = {
+    id: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    type: "spend",
+    amount,
+    reason,
+    timestamp: Date.now(),
+  };
+
+  return {
+    success: true,
+    profile: {
+      ...profile,
+      coins: profile.coins - amount,
+      coinLedger: [...profile.coinLedger, transaction].slice(-100),
+    },
+  };
+}
+
+export function getCoinsForDifficulty(
+  difficulty: "easy" | "medium" | "hard" | "expert",
+): number {
+  return COIN_REWARDS[difficulty];
+}
+
+// ============================================================================
+// GOALS SYSTEM
+// ============================================================================
+
+export function createDefaultGoals(): Goal[] {
+  return [
+    {
+      id: "goal_easy_5",
+      type: "puzzles_by_difficulty",
+      difficulty: "easy",
+      target: 5,
+      current: 0,
+      completed: false,
+      custom: false,
+      createdAt: Date.now(),
+    },
+    {
+      id: "goal_expert_1",
+      type: "puzzles_by_difficulty",
+      difficulty: "expert",
+      target: 1,
+      current: 0,
+      completed: false,
+      custom: false,
+      createdAt: Date.now(),
+    },
+    {
+      id: "goal_perfect_game",
+      type: "error_limit",
+      target: 0,
+      current: 999, // Will be set per game
+      completed: false,
+      custom: false,
+      createdAt: Date.now(),
+    },
+    {
+      id: "goal_streak_3",
+      type: "streak",
+      target: 3,
+      current: 0,
+      completed: false,
+      custom: false,
+      createdAt: Date.now(),
+    },
+  ];
+}
+
+export function createCustomGoal(
+  type: Goal["type"],
+  target: number,
+  difficulty?: "easy" | "medium" | "hard" | "expert",
+): Goal {
+  return {
+    id: `goal_custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    type,
+    difficulty,
+    target,
+    current: 0,
+    completed: false,
+    custom: true,
+    createdAt: Date.now(),
+  };
+}
+
+export function updateGoalProgress(
+  profile: PlayerProfile,
+  session: GameSessionRecord,
+): PlayerProfile {
+  const updatedGoals = profile.goals.map((goal) => {
+    if (goal.completed) return goal;
+
+    let newCurrent = goal.current;
+    let completed = false;
+
+    switch (goal.type) {
+      case "puzzles_by_difficulty":
+        if (
+          session.completed &&
+          goal.difficulty &&
+          session.difficulty === goal.difficulty
+        ) {
+          newCurrent += 1;
+          completed = newCurrent >= goal.target;
+        }
+        break;
+
+      case "error_limit":
+        if (session.completed && session.mistakes <= goal.target) {
+          completed = true;
+        }
+        break;
+
+      case "streak":
+        // Check recent games for streak
+        const recentCompleted = profile.recentGames
+          .slice(0, goal.target)
+          .every((g) => g.completed);
+        if (recentCompleted && profile.recentGames.length >= goal.target) {
+          newCurrent = goal.target;
+          completed = true;
+        }
+        break;
+    }
+
+    return {
+      ...goal,
+      current: newCurrent,
+      completed,
+      completedAt: completed ? Date.now() : goal.completedAt,
+    };
+  });
+
+  return {
+    ...profile,
+    goals: updatedGoals,
+  };
+}
+
+export function addCustomGoal(
+  profile: PlayerProfile,
+  goal: Goal,
+): PlayerProfile {
+  return {
+    ...profile,
+    goals: [...profile.goals, goal],
+  };
+}
+
+// ============================================================================
+// LEARNING CURVE TRACKING
+// ============================================================================
+
+export function recordLearningData(
+  profile: PlayerProfile,
+  session: GameSessionRecord,
+  hintsUsed: number,
+): PlayerProfile {
+  if (!session.completed) return profile;
+
+  const stats = profile.stats[session.difficulty];
+  const now = Date.now();
+  const oneDayMs = 24 * 60 * 60 * 1000;
+
+  // Update time history
+  const timeHistory = [...stats.timeHistory];
+  const lastTimeEntry = timeHistory[timeHistory.length - 1];
+
+  if (!lastTimeEntry || now - lastTimeEntry.date > oneDayMs) {
+    // New day, add new entry
+    timeHistory.push({ date: now, avgTime: session.timeMs });
+  } else {
+    // Same day, update average
+    const count = stats.gamesCompleted;
+    const newAvg =
+      (lastTimeEntry.avgTime * (count - 1) + session.timeMs) / count;
+    timeHistory[timeHistory.length - 1] = { date: now, avgTime: newAvg };
+  }
+
+  // Update error history
+  const errorHistory = [...stats.errorHistory];
+  const lastErrorEntry = errorHistory[errorHistory.length - 1];
+
+  if (!lastErrorEntry || now - lastErrorEntry.date > oneDayMs) {
+    errorHistory.push({ date: now, avgErrors: session.mistakes });
+  } else {
+    const count = stats.gamesCompleted;
+    const newAvg =
+      (lastErrorEntry.avgErrors * (count - 1) + session.mistakes) / count;
+    errorHistory[errorHistory.length - 1] = { date: now, avgErrors: newAvg };
+  }
+
+  // Update hint history
+  const hintHistory = [...stats.hintHistory];
+  const lastHintEntry = hintHistory[hintHistory.length - 1];
+
+  if (!lastHintEntry || now - lastHintEntry.date > oneDayMs) {
+    hintHistory.push({ date: now, avgHints: hintsUsed });
+  } else {
+    const count = stats.gamesCompleted;
+    const newAvg = (lastHintEntry.avgHints * (count - 1) + hintsUsed) / count;
+    hintHistory[hintHistory.length - 1] = { date: now, avgHints: newAvg };
+  }
+
+  // Keep last 30 entries
+  const updatedStats = {
+    ...stats,
+    timeHistory: timeHistory.slice(-30),
+    errorHistory: errorHistory.slice(-30),
+    hintHistory: hintHistory.slice(-30),
+  };
+
+  return {
+    ...profile,
+    stats: {
+      ...profile.stats,
+      [session.difficulty]: updatedStats,
+    },
   };
 }
