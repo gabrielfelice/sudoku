@@ -38,6 +38,9 @@ import { LearningCurve } from "@/components/LearningCurve";
 import { ModeSelector } from "@/components/ModeSelector";
 import { HelpPanel } from "@/components/HelpPanel";
 
+// Milestone N components
+import { ErrorLimitModal } from "@/components/ErrorLimitModal";
+
 type View =
   | "play"
   | "training"
@@ -77,6 +80,15 @@ export default function HomePage() {
   const [victoryCoins, setVictoryCoins] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+
+  // Milestone N: Error limit modal
+  const maxErrors = useGameStore((s) => s.config.maxErrors);
+  const errorLimitBehavior = useGameStore((s) => s.config.errorLimitBehavior);
+  const showErrorLimitModal =
+    maxErrors !== null &&
+    mistakes >= maxErrors &&
+    errorLimitBehavior === null &&
+    paused;
 
   // Apply theme
   useTheme();
@@ -292,6 +304,14 @@ export default function HomePage() {
     setShowModeSelector(false);
   };
 
+  // Milestone N: Handle new game when error limit behavior is "new-game"
+  useEffect(() => {
+    if (errorLimitBehavior === "new-game") {
+      // Generate new game
+      handleStartNewGame(gameState.playMode, difficulty);
+    }
+  }, [errorLimitBehavior]);
+
   return (
     <>
       {/* Tutorial */}
@@ -360,6 +380,9 @@ export default function HomePage() {
           onClose={() => setShowModeSelector(false)}
         />
       )}
+
+      {/* Milestone N: Error Limit Modal */}
+      <ErrorLimitModal isOpen={showErrorLimitModal} />
 
       {/* Keyboard controller */}
       {(view === "play" || view === "lesson") && <KeyboardController />}

@@ -31,9 +31,42 @@ export function HelpPanel() {
     return null; // Hide panel when help is disabled
   }
 
-  const handleCandidateFilter = (digit: Digit) => {
-    dispatch({ type: "APPLY_CANDIDATE_FILTER", digit });
+  const handleCandidateFilter = async (digit: Digit) => {
+    dispatch({ type: "START_CANDIDATE_FILTER" });
     setShowDigitSelector(false);
+
+    try {
+      // Create timeout promise
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error("Timeout")),
+          config.candidateFilterTimeout,
+        ),
+      );
+
+      // Create filter promise (simulated for now - actual implementation would filter candidates)
+      const filterPromise = new Promise((resolve) => {
+        // Simulate filtering work
+        setTimeout(() => {
+          dispatch({ type: "APPLY_CANDIDATE_FILTER", digit });
+          resolve(true);
+        }, 100);
+      });
+
+      // Race between filter and timeout
+      await Promise.race([filterPromise, timeoutPromise]);
+
+      dispatch({ type: "COMPLETE_CANDIDATE_FILTER" });
+    } catch (error) {
+      dispatch({ type: "COMPLETE_CANDIDATE_FILTER" });
+      if (error instanceof Error && error.message === "Timeout") {
+        dispatch({
+          type: "SET_TOAST",
+          message: "Candidate filtering timed out (10s limit)",
+          toastType: "warning",
+        });
+      }
+    }
   };
 
   const handleCleanNotes = () => {
@@ -71,9 +104,20 @@ export function HelpPanel() {
         <div className="mb-3">
           <button
             onClick={() => setShowDigitSelector(!showDigitSelector)}
-            className="w-full bg-purple-500 text-white py-2 px-4 rounded font-semibold hover:bg-purple-600 transition-colors"
+            disabled={useGameStore((s) => s.candidateFilterInProgress)}
+            className="w-full bg-purple-500 text-white py-2 px-4 rounded font-semibold hover:bg-purple-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            🔍 Candidate Filter
+            {useGameStore((s) => s.candidateFilterInProgress) ? (
+              <>
+                <span className="animate-spin">⏳</span>
+                <span>Filtering...</span>
+              </>
+            ) : (
+              <>
+                <span>🔍</span>
+                <span>Candidate Filter</span>
+              </>
+            )}
           </button>
           {showDigitSelector && (
             <div className="mt-2 grid grid-cols-3 gap-2">
@@ -81,7 +125,8 @@ export function HelpPanel() {
                 <button
                   key={digit}
                   onClick={() => handleCandidateFilter(digit)}
-                  className="bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold py-2 rounded transition-colors"
+                  disabled={useGameStore((s) => s.candidateFilterInProgress)}
+                  className="bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold py-2 rounded transition-colors disabled:bg-gray-200 disabled:cursor-not-allowed"
                 >
                   {digit}
                 </button>

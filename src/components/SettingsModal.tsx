@@ -462,6 +462,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       className="rounded border px-3 py-1"
                     >
                       <option value="unlimited">Ilimitado</option>
+                      <option value="1">1</option>
                       <option value="3">3</option>
                       <option value="5">5</option>
                     </select>

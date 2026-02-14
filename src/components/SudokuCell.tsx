@@ -97,11 +97,18 @@ export function SudokuCell({ idx }: SudokuCellProps) {
 
   const combinedStyle = { ...bgStyle, ...ringStyle };
 
+  // Milestone N: Temporal feedback
+  const lastActionTimestamp = useGameStore((s) => s.lastActionTimestamp);
+  const isRecentlyModified =
+    Date.now() - lastActionTimestamp < 500 && isSelected;
+
   return (
     <button
       onClick={handleClick}
       style={combinedStyle}
-      className="w-12 h-12 border border-gray-400 flex items-center justify-center relative hover:bg-blue-100 transition-colors focus:outline-none"
+      className={`w-12 h-12 border border-gray-400 flex items-center justify-center relative hover:bg-blue-100 transition-colors focus:outline-none ${
+        isRecentlyModified ? "temporal-feedback" : ""
+      }`}
       aria-label={`Cell ${idx + 1}, ${cellValue !== 0 ? `value ${cellValue}` : "empty"}`}
       role="gridcell"
     >

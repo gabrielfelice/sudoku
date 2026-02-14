@@ -78,7 +78,7 @@ export interface PlayerConfig {
   autoRemoveNotes: boolean;
   autoCleanInvalidNotes: boolean;
   liveConflictHighlight: boolean;
-  maxErrors: number | null; // null = unlimited, 3, 5
+  maxErrors: number | null; // null = unlimited, 1, 3, 5
   showSameNumberHighlight: boolean;
   showPeerHighlight: boolean;
   hintLimit: number | null; // null = unlimited, 3, 5, 10
@@ -87,6 +87,8 @@ export interface PlayerConfig {
   helpEnabled: boolean; // NEW: Enable/disable help items
   expertHintLimit: number; // NEW: Max hints for expert (default 3, can reduce)
   showLockIcon: boolean; // NEW: Show lock icon on locked cells (default false)
+  errorLimitBehavior: "continue" | "restart" | "new-game" | null; // Milestone N: Behavior when error limit reached
+  candidateFilterTimeout: number; // Milestone N: Timeout for candidate filtering in ms (default 10000)
 }
 
 export interface ThemeConfig {
@@ -175,6 +177,10 @@ export interface GameState {
     syncStatus: "synced" | "syncing" | "error" | "local";
     lastSyncTime?: number;
   };
+
+  // Milestone N: Advanced rules
+  lastActionTimestamp: number; // For temporal feedback
+  candidateFilterInProgress: boolean; // Track candidate filtering state
 }
 
 export function createInitialMeta(): CellMeta {
@@ -201,6 +207,8 @@ export function createDefaultConfig(): PlayerConfig {
     helpEnabled: true, // NEW: Help enabled by default
     expertHintLimit: 3, // NEW: Expert max 3 hints
     showLockIcon: false, // NEW: Lock icon disabled by default
+    errorLimitBehavior: null, // Milestone N: No behavior set until limit reached
+    candidateFilterTimeout: 10000, // Milestone N: 10 second timeout
   };
 }
 
@@ -266,6 +274,8 @@ export function createInitialState(): GameState {
       hintCount: 0,
     },
     cloudProfile: undefined,
+    lastActionTimestamp: 0, // Milestone N
+    candidateFilterInProgress: false, // Milestone N
   };
 }
 

@@ -106,7 +106,14 @@ export type GameAction =
       type: "SET_CLOUD_PROFILE";
       userId: string;
       syncStatus: "synced" | "syncing" | "error" | "local";
-    };
+    }
+  | {
+      type: "SET_ERROR_LIMIT_BEHAVIOR";
+      behavior: "continue" | "restart" | "new-game";
+    } // Milestone N
+  | { type: "RESTART_PUZZLE" } // Milestone N
+  | { type: "START_CANDIDATE_FILTER" } // Milestone N
+  | { type: "COMPLETE_CANDIDATE_FILTER" }; // Milestone N
 
 /**
  * Helper function to add history entry with timestamp and per-cell tracking
@@ -269,15 +276,24 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
           // Zen mode: don't count mistakes
           const mistakeIncrement = state.playMode === "zen" ? 0 : 1;
+          const newMistakes = state.mistakes + mistakeIncrement;
+
+          // Milestone N: Check error limit
+          const shouldPauseForLimit =
+            config.maxErrors !== null &&
+            newMistakes >= config.maxErrors &&
+            config.errorLimitBehavior === null;
 
           return {
             ...state,
             values: newValues,
             meta: newMeta,
-            mistakes: state.mistakes + mistakeIncrement,
+            mistakes: newMistakes,
+            paused: shouldPauseForLimit, // Pause if limit reached and no behavior set
             hint: null, // fechar dica ao errar
             history,
             cellHistory,
+            lastActionTimestamp: Date.now(), // Milestone N: Temporal feedback
             telemetry: {
               ...state.telemetry,
               errorCount: state.telemetry.errorCount + 1,
@@ -302,6 +318,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           meta: newMeta,
           history,
           cellHistory,
+          lastActionTimestamp: Date.now(), // Milestone N: Temporal feedback
           telemetry: {
             ...state.telemetry,
             actionTimestamps: [
@@ -1074,6 +1091,109 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           message: `Cleaned ${affectedIndices.length} cell(s)`,
           type: "success",
         },
+      };
+    }
+
+    case "SET_ERROR_LIMIT_BEHAVIOR": {
+      // Milestone N: Set behavior when error limit is reached
+      const newConfig = {
+        ...state.config,
+        errorLimitBehavior: action.behavior,
+      };
+
+      // If behavior is "continue", just unpause and continue
+      if (action.behavior === "continue") {
+        return {
+          ...state,
+          config: newConfig,
+          paused: false,
+        };
+      }
+
+      // If behavior is "restart", reset to initial puzzle state
+      if (action.behavior === "restart") {
+        const meta: CellMeta[] = state.given.map((val) => ({
+          isGiven: val !== 0,
+          isLocked: val !== 0,
+          status: val !== 0 ? "correct" : "empty",
+          notes: 0,
+        }));
+
+        return {
+          ...state,
+          values: [...state.given],
+          meta,
+          mistakes: 0,
+          paused: false,
+          config: newConfig,
+          history: [],
+          cellHistory: new Map(),
+          timer: {
+            elapsedMs: 0,
+            running: true,
+            lastTick: Date.now(),
+          },
+          toast: {
+            message: "Puzzle restarted!",
+            type: "info",
+          },
+        };
+      }
+
+      // If behavior is "new-game", this will be handled by the component
+      // by dispatching a NEW_GAME action
+      return {
+        ...state,
+        config: newConfig,
+      };
+    }
+
+    case "RESTART_PUZZLE": {
+      // Milestone N: Restart current puzzle
+      const meta: CellMeta[] = state.given.map((val) => ({
+        isGiven: val !== 0,
+        isLocked: val !== 0,
+        status: val !== 0 ? "correct" : "empty",
+        notes: 0,
+      }));
+
+      return {
+        ...state,
+        values: [...state.given],
+        meta,
+        mistakes: 0,
+        paused: false,
+        history: [],
+        cellHistory: new Map(),
+        timer: {
+          elapsedMs: 0,
+          running: true,
+          lastTick: Date.now(),
+        },
+        config: {
+          ...state.config,
+          errorLimitBehavior: null, // Reset behavior
+        },
+        toast: {
+          message: "Puzzle restarted!",
+          type: "info",
+        },
+      };
+    }
+
+    case "START_CANDIDATE_FILTER": {
+      // Milestone N: Mark candidate filtering as in progress
+      return {
+        ...state,
+        candidateFilterInProgress: true,
+      };
+    }
+
+    case "COMPLETE_CANDIDATE_FILTER": {
+      // Milestone N: Mark candidate filtering as complete
+      return {
+        ...state,
+        candidateFilterInProgress: false,
       };
     }
 
