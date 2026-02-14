@@ -31,7 +31,7 @@ export function ModeSelector({ onSelectMode, onClose }: ModeSelectorProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
         <h2 className="text-3xl font-bold mb-4">Select Game Mode</h2>
         <p className="text-gray-600 mb-6">
           Choose how you want to play your next puzzle

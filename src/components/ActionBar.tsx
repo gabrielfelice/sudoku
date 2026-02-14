@@ -16,8 +16,6 @@ export function ActionBar() {
   const meta = useGameStore((s) => s.meta);
   const difficulty = useGameStore((s) => s.difficulty);
 
-  const [showNewGameModal, setShowNewGameModal] = useState(false);
-
   const handleClear = () => {
     dispatch({ type: "CLEAR_CELL" });
   };
@@ -113,7 +111,6 @@ export function ActionBar() {
         >
           Limpar
         </button>
-
         <button
           onClick={handleErase}
           disabled={isDisabled}
@@ -122,9 +119,7 @@ export function ActionBar() {
         >
           Borracha
         </button>
-
         <UndoMenu />
-
         <button
           onClick={handleToggleNote}
           disabled={isDisabled}
@@ -141,15 +136,13 @@ export function ActionBar() {
         >
           Anotação
         </button>
-
         <Switch
           checked={mode === "inspect"}
           onChange={handleToggleInspect}
-          label="Investigador"
+          label="Investigar"
           disabled={isDisabled}
           className="text-sm"
         />
-
         <button
           onClick={handleHint}
           disabled={isDisabled}
@@ -158,7 +151,6 @@ export function ActionBar() {
         >
           💡 Dica
         </button>
-
         {hasWrongCell && (
           <button
             onClick={handleErrorExplanation}
@@ -168,33 +160,8 @@ export function ActionBar() {
           >
             ❌ Explicação
           </button>
-        )}
-
-        <button
-          onClick={() => setShowNewGameModal(true)}
-          disabled={isDisabled}
-          className="px-3 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-          title="Escolher novo jogo"
-        >
-          🎲 Novo Jogo
-        </button>
+        )}{" "}
       </div>
-
-      {/* Import NewGameModal at component level */}
-      {showNewGameModal && (
-        <div className="fixed inset-0 z-50">
-          {/* Use dynamic import to avoid circular dependencies */}
-          {(() => {
-            const { NewGameModal } = require("@/components/NewGameModal");
-            return (
-              <NewGameModal
-                isOpen={showNewGameModal}
-                onClose={() => setShowNewGameModal(false)}
-              />
-            );
-          })()}
-        </div>
-      )}
     </div>
   );
 }

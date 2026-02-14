@@ -16,7 +16,7 @@ export function ContinueGameModal({
       aria-modal="true"
       aria-labelledby="continue-game-title"
     >
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-fadeIn">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-fadeIn max-h-[90vh] overflow-y-auto">
         <h2
           id="continue-game-title"
           className="text-2xl font-bold text-gray-900 mb-4"
