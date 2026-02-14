@@ -9,6 +9,7 @@ This milestone focused on refining the user experience and interface of the Sudo
 **Before**: The TopBar only displayed errors and timer.
 
 **After**: Enhanced HUD with comprehensive game information:
+
 - **Timer** (⏱️): Displays elapsed time in MM:SS format
 - **Errors** (❌): Shows mistakes count
   - Format: `X/Y` when `maxErrors` limit is active
@@ -19,6 +20,7 @@ This milestone focused on refining the user experience and interface of the Sudo
   - Uses `hintLimit` for other difficulties
 
 **Visual Organization**:
+
 - Left section: Timer and Errors
 - Center section: Difficulty and Hints
 - Right section: Pause/Resume button
@@ -26,6 +28,7 @@ This milestone focused on refining the user experience and interface of the Sudo
 ### 2. Button Standardization ([ActionBar.tsx](file:///home/gabrielfelice/workspace/sudoku/src/components/ActionBar.tsx))
 
 **Changes**:
+
 - ✅ Renamed "Investigador" → "Investigar" for consistency with other action verbs
 - ✅ Removed redundant "🎲 Novo Jogo" button from ActionBar
 - ✅ Kept "New Game" and "Advanced Options" buttons in the main page layout
@@ -41,6 +44,7 @@ This milestone focused on refining the user experience and interface of the Sudo
 **Before**: Black borders (`border-gray-800`)
 
 **After**: Gray borders (`border-gray-400`)
+
 - Outer board border: 4px gray
 - Block dividers (3x3): 2px gray
 - Softer, more modern appearance
@@ -50,6 +54,7 @@ This milestone focused on refining the user experience and interface of the Sudo
 **Before**: Light gray borders (`border-gray-300`)
 
 **After**: Medium gray borders (`border-gray-400`)
+
 - Better grid definition
 - Consistent with board borders
 - Improved visual hierarchy
@@ -59,16 +64,19 @@ This milestone focused on refining the user experience and interface of the Sudo
 All modals now follow a consistent pattern:
 
 #### Fixed Positioning
+
 ```tsx
 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
 ```
 
 #### Viewport-Constrained & Scrollable
+
 ```tsx
 <div className="... max-h-[90vh] overflow-y-auto">
 ```
 
 **Modals Updated**:
+
 - ✅ [NewGameModal.tsx](file:///home/gabrielfelice/workspace/sudoku/src/components/NewGameModal.tsx) - Already compliant
 - ✅ [SettingsModal.tsx](file:///home/gabrielfelice/workspace/sudoku/src/components/SettingsModal.tsx) - Already compliant
 - ✅ [HintModal.tsx](file:///home/gabrielfelice/workspace/sudoku/src/components/HintModal.tsx) - Already compliant (docked at bottom)
@@ -80,30 +88,36 @@ All modals now follow a consistent pattern:
 ### 5. Layout Flexibility
 
 **Current State**: The main page layout ([page.tsx](file:///home/gabrielfelice/workspace/sudoku/src/app/page.tsx)) already supports flexible layouts:
+
 - Board and keypad are in a flex container
 - Help panel is positioned as a sidebar
 - Layout adapts to different screen sizes
 
-**Future Enhancement Opportunity**: 
+**Future Enhancement Opportunity**:
+
 - Alternative keypad positioning (lateral/side-by-side) can be implemented via a layout toggle in settings
 - Current structure supports this without major refactoring
 
 ## Visual Hierarchy Improvements
 
 ### Color Consistency
+
 - **Gray borders** throughout the UI create a cohesive, modern look
 - **Consistent spacing** between HUD elements improves scannability
 - **Emoji icons** (⏱️ ❌ 🎯 💡) provide quick visual recognition
 
 ### Information Architecture
+
 The HUD now presents information in logical groups:
+
 1. **Performance metrics** (Timer, Errors) - Left
-2. **Game context** (Difficulty, Hints) - Center  
+2. **Game context** (Difficulty, Hints) - Center
 3. **Game control** (Pause/Resume) - Right
 
 ## Files Modified
 
 ### Components
+
 - `src/components/TopBar.tsx` - Enhanced HUD with difficulty and hints
 - `src/components/ActionBar.tsx` - Renamed button, removed redundancy
 - `src/components/SudokuBoard.tsx` - Gray borders
@@ -112,6 +126,7 @@ The HUD now presents information in logical groups:
 - `src/components/ModeSelector.tsx` - Modal standardization
 
 ### Styles
+
 - `src/components/VictoryModal.module.css` - Modal standardization
 
 ## Testing Recommendations
@@ -145,27 +160,32 @@ The HUD now presents information in logical groups:
 ## Acceptance Criteria
 
 ✅ **HUD Reorganization**
+
 - Timer, errors, difficulty, and hints displayed above puzzle
 - Errors shown as X/Y when limit is active
 - HUD is visually clear and well-organized
 
 ✅ **Button Standardization**
+
 - "Investigador" renamed to "Investigar"
 - "New Game" + "Advanced Options" integrated in main layout
 - Redundant "Novo Jogo" button removed
 - Button functionality reviewed and clarified
 
 ✅ **Visual Improvements**
+
 - Gray outline lines on puzzle grid
 - Gray borders on cells
 - Consistent visual hierarchy
 
 ✅ **Modal Standardization**
+
 - All modals use fixed positioning
 - All modals smaller than viewport (max-h-[90vh])
 - All modals scrollable when content overflows
 
 ✅ **Code Quality**
+
 - All modified files formatted with Prettier
 - No breaking changes to game engine
 - Backward compatible with existing state

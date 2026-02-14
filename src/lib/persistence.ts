@@ -7,7 +7,7 @@ const THEME_KEY = "sudoku:theme";
  * Save player configuration to localStorage
  */
 export function saveConfig(config: PlayerConfig): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
     localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
   } catch (error) {
@@ -19,7 +19,7 @@ export function saveConfig(config: PlayerConfig): void {
  * Load player configuration from localStorage
  */
 export function loadConfig(): PlayerConfig | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   try {
     const stored = localStorage.getItem(CONFIG_KEY);
     if (!stored) return null;
@@ -34,7 +34,7 @@ export function loadConfig(): PlayerConfig | null {
  * Save theme configuration to localStorage
  */
 export function saveTheme(theme: ThemeConfig): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
     localStorage.setItem(THEME_KEY, JSON.stringify(theme));
   } catch (error) {
@@ -46,7 +46,7 @@ export function saveTheme(theme: ThemeConfig): void {
  * Load theme configuration from localStorage
  */
 export function loadTheme(): ThemeConfig | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   try {
     const stored = localStorage.getItem(THEME_KEY);
     if (!stored) return null;

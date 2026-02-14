@@ -99,6 +99,10 @@ export interface ThemeConfig {
   boardBorder: string;
   hintPrimaryBg: string;
   hintSecondaryBg: string;
+  // Milestone M: Expanded customization
+  globalBackground?: string;
+  cellBackground?: string;
+  cellBorder?: string;
 }
 
 export interface GameState {
@@ -211,6 +215,10 @@ export function createDefaultTheme(): ThemeConfig {
     boardBorder: "#000000",
     hintPrimaryBg: "#fff9c4",
     hintSecondaryBg: "#fff59d",
+    // Milestone M: Expanded customization defaults
+    globalBackground: "#f5f5f5",
+    cellBackground: "#ffffff",
+    cellBorder: "#e0e0e0",
   };
 }
 
@@ -259,4 +267,11 @@ export function createInitialState(): GameState {
     },
     cloudProfile: undefined,
   };
+}
+
+// Milestone M: Custom color usage tracking
+export interface CustomColorUsage {
+  usedColors: string[]; // Array of hex colors used
+  maxFreeColors: number; // 3 for free tier
+  isPremium: boolean; // Unlocked by purchasing any theme
 }

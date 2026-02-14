@@ -34,8 +34,9 @@ interface ProfileStore {
   purchaseItem: (
     itemId: string,
     price: number,
-    category: "helpItems" | "themes",
+    category: "helpItems" | "themes" | "avatarPacks", // Milestone M: Added avatarPacks
   ) => boolean;
+  setAvatar: (avatarId: string) => void; // Milestone M
   addGoal: (
     type: Goal["type"],
     target: number,
@@ -153,6 +154,14 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     saveProfile(updated);
     set({ profile: updated });
     return true;
+  },
+
+  setAvatar: (avatarId: string) => {
+    set((state) => {
+      const updated = { ...state.profile, avatar: avatarId };
+      saveProfile(updated);
+      return { profile: updated };
+    });
   },
 
   addGoal: (type, target, difficulty) => {

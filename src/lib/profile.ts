@@ -55,12 +55,16 @@ export interface PlayerProfile {
   createdAt: number;
   lastPlayedAt: number;
 
+  // Milestone M: Avatar
+  avatar: string; // Avatar ID (default: "smile")
+
   // Economy
   coins: number;
   coinLedger: CoinTransaction[];
   inventory: {
     helpItems: string[]; // IDs of purchased help items
     themes: string[]; // IDs of purchased themes
+    avatarPacks: string[]; // IDs of purchased avatar packs (Milestone M)
   };
 
   // Stats by game mode
@@ -96,7 +100,7 @@ export interface ProfileStorage {
 }
 
 const STORAGE_KEY = "sudoku_profile";
-const CURRENT_SCHEMA_VERSION = 2; // Updated for Milestone J
+const CURRENT_SCHEMA_VERSION = 3; // Updated for Milestone M
 
 export function createDefaultDifficultyStats(): DifficultyStats {
   return {
@@ -116,11 +120,13 @@ export function createDefaultProfile(): PlayerProfile {
     name: "Player",
     createdAt: Date.now(),
     lastPlayedAt: Date.now(),
+    avatar: "smile", // Milestone M: Default avatar
     coins: 100, // Starting balance
     coinLedger: [],
     inventory: {
       helpItems: [],
       themes: [],
+      avatarPacks: [], // Milestone M
     },
     stats: {
       easy: createDefaultDifficultyStats(),
@@ -184,7 +190,20 @@ export function saveProfile(profile: PlayerProfile): void {
 }
 
 function migrateProfile(data: ProfileStorage): PlayerProfile {
-  // Simple migration: if schema is old, start fresh
+  // Milestone M: Migrate to schema 3 (add avatar and avatarPacks)
+  if (data.schemaVersion < 3) {
+    const profile = data.profile as any;
+    return {
+      ...profile,
+      avatar: profile.avatar || "smile",
+      inventory: {
+        ...profile.inventory,
+        avatarPacks: profile.inventory?.avatarPacks || [],
+      },
+    };
+  }
+
+  // For future migrations
   console.warn(
     `Migrating profile from schema ${data.schemaVersion} to ${CURRENT_SCHEMA_VERSION}`,
   );

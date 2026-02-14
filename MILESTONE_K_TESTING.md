@@ -13,6 +13,7 @@
 **Objective**: Verify app starts with mode selector, not auto-puzzle
 
 ### Steps
+
 1. Clear localStorage and refresh
 2. **Expected**: Mode selector modal appears
 3. **Expected**: NO puzzle is loaded on the board
@@ -22,6 +23,7 @@
 7. **Expected**: Puzzle loads and game begins
 
 ### Pass Criteria
+
 - ✅ Mode selector appears on first load
 - ✅ No auto-generated puzzle
 - ✅ Game starts only after user selection
@@ -33,6 +35,7 @@
 **Objective**: Verify Normal mode has timer and mistake tracking
 
 ### Steps
+
 1. Start a Normal mode game (any difficulty)
 2. **Expected**: Timer is running (updates every second)
 3. **Expected**: Mistake counter shows "0"
@@ -42,6 +45,7 @@
 7. **Expected**: Timer shows elapsed time
 
 ### Pass Criteria
+
 - ✅ Timer runs continuously
 - ✅ Mistakes are counted
 - ✅ Both stats visible in UI
@@ -53,6 +57,7 @@
 **Objective**: Verify Zen mode has NO timer and NO mistake tracking
 
 ### Steps
+
 1. Click "New Game" → Select "Zen" mode → Medium difficulty
 2. **Expected**: Timer shows "0:00" and doesn't change
 3. **Expected**: Mistake counter shows "0"
@@ -62,6 +67,7 @@
 7. **Expected**: Timer still shows "0:00"
 
 ### Pass Criteria
+
 - ✅ Timer doesn't run
 - ✅ Mistakes don't count
 - ✅ Relaxed gameplay experience
@@ -73,6 +79,7 @@
 **Objective**: Verify Challenge mode shows strict limits
 
 ### Steps
+
 1. Click "New Game" → Select "Challenge" mode → Medium difficulty
 2. **Expected**: Mode selector shows "Time Limit: 20 min | Max Errors: 3 | Max Hints: 1"
 3. Start the game
@@ -82,6 +89,7 @@
 7. **Expected**: Limited hints available
 
 ### Pass Criteria
+
 - ✅ Strict limits displayed
 - ✅ Timer runs
 - ✅ Mistakes counted
@@ -94,6 +102,7 @@
 **Objective**: Verify game pauses when opening settings
 
 ### Steps
+
 1. Start any game
 2. Note the current timer value (e.g., "1:23")
 3. Click "⚙️ Settings" button
@@ -105,6 +114,7 @@
 9. **Expected**: Game resumes
 
 ### Pass Criteria
+
 - ✅ Game auto-pauses on settings open
 - ✅ Timer stops during settings
 - ✅ Game resumes on close
@@ -116,6 +126,7 @@
 **Objective**: Verify lock icon can be toggled and defaults to OFF
 
 ### Steps
+
 1. Start a new game
 2. Open Settings → Jogabilidade tab
 3. **Expected**: "Mostrar ícone de cadeado" toggle exists
@@ -129,6 +140,7 @@
 11. **Expected**: Lock icons disappear
 
 ### Pass Criteria
+
 - ✅ Toggle exists in settings
 - ✅ Default is OFF
 - ✅ Lock icon shows/hides based on setting
@@ -141,6 +153,7 @@
 **Objective**: Verify victory modal shows time and mistakes in Normal mode
 
 ### Steps
+
 1. Complete a puzzle in Normal mode (use hints if needed)
 2. **Expected**: Victory modal appears
 3. **Expected**: Shows "🎯 Normal Mode" badge
@@ -152,6 +165,7 @@
 9. **Expected**: Mode selector appears
 
 ### Pass Criteria
+
 - ✅ Victory modal appears on completion
 - ✅ Mode badge displayed
 - ✅ Time and mistakes shown
@@ -164,6 +178,7 @@
 **Objective**: Verify victory modal HIDES time and mistakes in Zen mode
 
 ### Steps
+
 1. Complete a puzzle in Zen mode
 2. **Expected**: Victory modal appears
 3. **Expected**: Shows "🧘 Zen Mode" badge
@@ -173,6 +188,7 @@
 7. **Expected**: Shows coins earned
 
 ### Pass Criteria
+
 - ✅ Victory modal appears
 - ✅ Zen mode badge shown
 - ✅ Time and mistakes HIDDEN
@@ -185,6 +201,7 @@
 **Objective**: Verify auto-tutorial shows checkbox and marks complete
 
 ### Steps
+
 1. Clear localStorage
 2. Refresh app
 3. Skip the mode selector (or complete a game)
@@ -196,6 +213,7 @@
 9. **Expected**: Tutorial doesn't appear again
 
 ### Pass Criteria
+
 - ✅ Tutorial auto-appears on first load
 - ✅ Checkbox is visible
 - ✅ Checking box prevents future auto-show
@@ -207,6 +225,7 @@
 **Objective**: Verify manual tutorial HIDES checkbox and can be reopened
 
 ### Steps
+
 1. Complete the auto-tutorial (or mark as completed)
 2. Click the "❓" button in navigation
 3. **Expected**: Tutorial opens
@@ -216,6 +235,7 @@
 7. **Expected**: Tutorial opens again (not blocked)
 
 ### Pass Criteria
+
 - ✅ Tutorial opens via ❓ button
 - ✅ Checkbox is HIDDEN
 - ✅ Can be reopened multiple times
@@ -227,6 +247,7 @@
 **Objective**: Verify keyboard works during lessons
 
 ### Steps
+
 1. Navigate to Training → Select any lesson
 2. Start the lesson
 3. Click on an empty cell
@@ -240,6 +261,7 @@
 11. **Expected**: Undo works
 
 ### Pass Criteria
+
 - ✅ Keyboard input works in lessons
 - ✅ Mode switching works (n key)
 - ✅ Undo works (u key)
@@ -252,6 +274,7 @@
 **Objective**: Verify saved games still work correctly
 
 ### Steps
+
 1. Start a game and make some moves
 2. Refresh the page
 3. **Expected**: "Continue Game" modal appears
@@ -261,6 +284,7 @@
 7. **Expected**: Mistakes preserved
 
 ### Pass Criteria
+
 - ✅ Saved game detected
 - ✅ State restored correctly
 - ✅ Timer and mistakes preserved
@@ -272,6 +296,7 @@
 **Objective**: Verify switching between modes works
 
 ### Steps
+
 1. Start a Normal mode game
 2. Click "New Game" → Select Zen mode
 3. **Expected**: New Zen game starts
@@ -281,6 +306,7 @@
 7. **Expected**: Timer runs
 
 ### Pass Criteria
+
 - ✅ Can switch between modes
 - ✅ Each mode has correct behavior
 - ✅ No state leakage between modes
@@ -290,6 +316,7 @@
 ## Summary
 
 ### Critical Tests (Must Pass)
+
 - ✅ Test 1: Initialization Flow
 - ✅ Test 2: Normal Mode
 - ✅ Test 3: Zen Mode
@@ -298,12 +325,14 @@
 - ✅ Test 10: Tutorial Manual Mode
 
 ### Important Tests (Should Pass)
+
 - ✅ Test 4: Challenge Mode
 - ✅ Test 7: Victory Normal
 - ✅ Test 8: Victory Zen
 - ✅ Test 11: Keyboard in Training
 
 ### Nice to Have Tests
+
 - ✅ Test 9: Tutorial Auto Mode
 - ✅ Test 12: Saved Game
 - ✅ Test 13: Mode Switching
@@ -321,6 +350,7 @@
 ## Reporting Issues
 
 If any test fails, report with:
+
 1. Test number and name
 2. Steps to reproduce
 3. Expected vs actual behavior

@@ -21,5 +21,16 @@ export function useTheme() {
     root.style.setProperty("--board-border", theme.boardBorder);
     root.style.setProperty("--hint-primary-bg", theme.hintPrimaryBg);
     root.style.setProperty("--hint-secondary-bg", theme.hintSecondaryBg);
+
+    // Milestone M: New customization variables
+    root.style.setProperty(
+      "--global-background",
+      theme.globalBackground || "#f5f5f5",
+    );
+    root.style.setProperty(
+      "--cell-background",
+      theme.cellBackground || "#ffffff",
+    );
+    root.style.setProperty("--cell-border", theme.cellBorder || "#e0e0e0");
   }, [theme]);
 }

@@ -1,7 +1,7 @@
-"use client";
-
 import { useGameStore } from "@/state/store";
+import { useProfileStore } from "@/state/profileStore";
 import { formatTime } from "@/lib/time";
+import { getAvatarById } from "@/lib/avatars";
 
 export function TopBar() {
   const mistakes = useGameStore((s) => s.mistakes);
@@ -13,6 +13,7 @@ export function TopBar() {
   const hintLimit = useGameStore((s) => s.config.hintLimit);
   const expertHintLimit = useGameStore((s) => s.config.expertHintLimit);
   const dispatch = useGameStore((s) => s.dispatch);
+  const profile = useProfileStore((s) => s.profile);
 
   const handlePause = () => {
     dispatch({ type: "TOGGLE_PAUSE" });
@@ -29,6 +30,8 @@ export function TopBar() {
     hard: "Difícil",
     expert: "Expert",
   };
+
+  const avatar = getAvatarById(profile.avatar);
 
   return (
     <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
@@ -72,13 +75,20 @@ export function TopBar() {
         )}
       </div>
 
-      {/* Right section: Pause button */}
-      <button
-        onClick={handlePause}
-        className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-      >
-        {paused ? "Retomar" : "Pausar"}
-      </button>
+      {/* Right section: Avatar and Pause button */}
+      <div className="flex items-center gap-3">
+        {/* Milestone M: Avatar display */}
+        <div className="text-3xl" title={`${profile.name}`}>
+          {avatar?.emoji || "😊"}
+        </div>
+
+        <button
+          onClick={handlePause}
+          className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          {paused ? "Retomar" : "Pausar"}
+        </button>
+      </div>
     </div>
   );
 }

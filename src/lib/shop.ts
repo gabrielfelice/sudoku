@@ -3,7 +3,7 @@ export interface ShopItem {
   name: string;
   description: string;
   basePrice: number;
-  category: "help" | "theme";
+  category: "help" | "theme" | "avatar"; // Milestone M: Added avatar
   tier?: "basic" | "premium";
 }
 
@@ -72,6 +72,36 @@ export const SHOP_CATALOG: ShopItem[] = [
     basePrice: 30,
     category: "theme",
   },
+
+  // Milestone M: Avatar Packs
+  {
+    id: "pack_animals",
+    name: "Animal Pack",
+    description: "12 cute animal avatars",
+    basePrice: 10,
+    category: "avatar",
+  },
+  {
+    id: "pack_food",
+    name: "Food Pack",
+    description: "10 delicious food avatars",
+    basePrice: 10,
+    category: "avatar",
+  },
+  {
+    id: "pack_sports",
+    name: "Sports Pack",
+    description: "10 sports and activity avatars",
+    basePrice: 10,
+    category: "avatar",
+  },
+  {
+    id: "pack_nature",
+    name: "Nature Pack",
+    description: "10 nature and weather avatars",
+    basePrice: 10,
+    category: "avatar",
+  },
 ];
 
 // Difficulty multipliers for help items
@@ -117,7 +147,9 @@ export function getItemById(id: string): ShopItem | undefined {
   return SHOP_CATALOG.find((item) => item.id === id);
 }
 
-export function getItemsByCategory(category: "help" | "theme"): ShopItem[] {
+export function getItemsByCategory(
+  category: "help" | "theme" | "avatar",
+): ShopItem[] {
   return SHOP_CATALOG.filter((item) => item.category === category);
 }
 
