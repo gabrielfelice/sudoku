@@ -8,10 +8,12 @@ import { Digit } from "@/engine";
 export function HelpPanel() {
   const dispatch = useGameStore((s) => s.dispatch);
   const config = useGameStore((s) => s.config);
-  const difficulty = useGameStore((s) => s.difficulty);
-  const hintsUsedThisPuzzle = useGameStore((s) => s.hintsUsedThisPuzzle);
   const profile = useProfileStore((s) => s.profile);
   const useHelpItem = useProfileStore((s) => s.useHelpItem);
+
+  const candidateFilterInProgress = useGameStore(
+    (s) => s.candidateFilterInProgress,
+  );
 
   const [showDigitSelector, setShowDigitSelector] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -106,8 +108,6 @@ export function HelpPanel() {
     dispatch({ type: "CLEAN_INVALID_NOTES" });
   };
 
-  const hintLimit = difficulty === "expert" ? config.expertHintLimit : null;
-
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
       <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
@@ -115,36 +115,16 @@ export function HelpPanel() {
         <span>Help Items</span>
       </h3>
 
-      {/* Hint Counter */}
-      {hintLimit && (
-        <div className="mb-4 bg-blue-50 border border-blue-200 rounded p-3">
-          <div className="text-sm font-semibold text-blue-900">
-            Hints Used: {hintsUsedThisPuzzle} / {hintLimit}
-          </div>
-          <div className="w-full bg-blue-200 rounded-full h-2 mt-2">
-            <div
-              className="bg-blue-600 h-2 rounded-full transition-all"
-              style={{
-                width: `${(hintsUsedThisPuzzle / hintLimit) * 100}%`,
-              }}
-            />
-          </div>
-        </div>
-      )}
-
       {/* Candidate Filter */}
       {isMounted && hasFilterItem && (
         <div className="mb-3">
           <button
             onClick={() => setShowDigitSelector(!showDigitSelector)}
-            disabled={
-              useGameStore((s) => s.candidateFilterInProgress) ||
-              filterQty === 0
-            }
+            disabled={candidateFilterInProgress || filterQty === 0}
             className="w-full bg-purple-500 text-white py-2 px-4 rounded font-semibold hover:bg-purple-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-between"
           >
             <span className="flex items-center gap-2">
-              {useGameStore((s) => s.candidateFilterInProgress) ? (
+              {candidateFilterInProgress ? (
                 <>
                   <span className="animate-spin">⏳</span>
                   <span>Filtering...</span>
@@ -166,7 +146,7 @@ export function HelpPanel() {
                 <button
                   key={digit}
                   onClick={() => handleCandidateFilter(digit)}
-                  disabled={useGameStore((s) => s.candidateFilterInProgress)}
+                  disabled={candidateFilterInProgress}
                   className="bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold py-2 rounded transition-colors disabled:bg-gray-200 disabled:cursor-not-allowed"
                 >
                   {digit}

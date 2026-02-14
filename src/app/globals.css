@@ -65,7 +65,6 @@ body {
 
 /* Microinteractions */
 @keyframes pulse {
-
   0%,
   100% {
     transform: scale(1);
@@ -81,7 +80,6 @@ body {
 }
 
 @keyframes flash-correct {
-
   0%,
   100% {
     background-color: transparent;
@@ -97,7 +95,6 @@ body {
 }
 
 @keyframes shake {
-
   0%,
   100% {
     transform: translateX(0);

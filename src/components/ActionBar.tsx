@@ -4,8 +4,8 @@ import { useGameStore } from "@/state/store";
 import { CellValue } from "@/engine";
 import { explainHint } from "@/engine/explain";
 import { UndoMenu } from "@/components/UndoMenu";
-import { Switch } from "@/components/Switch";
 import { useState } from "react";
+import { Eraser, Pencil, Search } from "lucide-react";
 
 export function ActionBar() {
   const mode = useGameStore((s) => s.mode);
@@ -15,10 +15,6 @@ export function ActionBar() {
   const values = useGameStore((s) => s.values);
   const meta = useGameStore((s) => s.meta);
   const difficulty = useGameStore((s) => s.difficulty);
-
-  const handleClear = () => {
-    dispatch({ type: "CLEAR_CELL" });
-  };
 
   const handleErase = () => {
     dispatch({ type: "ERASE_NOTES" });
@@ -77,7 +73,6 @@ export function ActionBar() {
   };
 
   const isDisabled = paused;
-  const isClearDisabled = isDisabled || selectedIdx === null;
 
   // Verificar se há célula errada selecionada
   const hasWrongCell =
@@ -89,10 +84,10 @@ export function ActionBar() {
       <div className="flex justify-center">
         <div
           className={`
-            px-6 py-2 rounded-full font-bold text-sm tracking-wide
-            ${mode === "answer" ? "bg-blue-100 text-blue-800" : ""}
-            ${mode === "note" ? "bg-green-100 text-green-800" : ""}
-            ${mode === "inspect" ? "bg-yellow-100 text-yellow-800" : ""}
+            px-4 py-1.5 rounded-full font-semibold text-xs tracking-wide
+            ${mode === "answer" ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" : ""}
+            ${mode === "note" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : ""}
+            ${mode === "inspect" ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200" : ""}
           `}
         >
           {mode === "answer" && "MODO: RESPONDER"}
@@ -103,46 +98,57 @@ export function ActionBar() {
 
       {/* Action buttons */}
       <div className="flex items-center justify-center gap-2 flex-wrap">
-        <button
-          onClick={handleClear}
-          disabled={isClearDisabled}
-          className="px-3 py-2 bg-red-100 text-red-800 font-semibold rounded-lg hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-          title="Limpar célula (Backspace/Delete)"
-        >
-          Limpar
-        </button>
+        {/* Borracha - Eraser icon button */}
         <button
           onClick={handleErase}
           disabled={isDisabled}
-          className="px-3 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-          title="Apagar notas"
+          className="p-3 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          title="Borracha - Apagar notas (Backspace/Delete)"
+          aria-label="Borracha - Apagar notas"
         >
-          Borracha
+          <Eraser className="h-5 w-5" />
         </button>
+
         <UndoMenu />
+
+        {/* Anotação - Pencil icon button */}
         <button
           onClick={handleToggleNote}
           disabled={isDisabled}
           className={`
-            px-3 py-2 font-semibold rounded-lg transition-colors text-sm
+            p-3 font-semibold rounded-lg transition-colors
             ${
               mode === "note"
                 ? "bg-green-600 text-white hover:bg-green-700 ring-2 ring-green-400"
-                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                : "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
             }
             disabled:opacity-50 disabled:cursor-not-allowed
           `}
           title="Modo anotação (N)"
+          aria-label="Modo anotação"
         >
-          Anotação
+          <Pencil className="h-5 w-5" />
         </button>
-        <Switch
-          checked={mode === "inspect"}
-          onChange={handleToggleInspect}
-          label="Investigar"
+
+        {/* Investigar - Magnifying glass icon button */}
+        <button
+          onClick={() => handleToggleInspect(mode !== "inspect")}
           disabled={isDisabled}
-          className="text-sm"
-        />
+          className={`
+            p-3 font-semibold rounded-lg transition-colors
+            ${
+              mode === "inspect"
+                ? "bg-yellow-600 text-white hover:bg-yellow-700 ring-2 ring-yellow-400"
+                : "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
+            }
+            disabled:opacity-50 disabled:cursor-not-allowed
+          `}
+          title="Modo investigar"
+          aria-label="Modo investigar"
+        >
+          <Search className="h-5 w-5" />
+        </button>
+
         <button
           onClick={handleHint}
           disabled={isDisabled}
@@ -160,7 +166,7 @@ export function ActionBar() {
           >
             ❌ Explicação
           </button>
-        )}{" "}
+        )}
       </div>
     </div>
   );

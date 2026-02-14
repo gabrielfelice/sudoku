@@ -8,9 +8,9 @@ import { saveGame, loadGame, clearSave } from "@/lib/storage";
 import { useTheme } from "@/lib/useTheme";
 
 // Game components
-import { TopBar } from "@/components/TopBar";
 import { SudokuBoard } from "@/components/SudokuBoard";
 import { ActionBar } from "@/components/ActionBar";
+import { GameHUD } from "@/components/GameHUD";
 import { Keypad } from "@/components/Keypad";
 import { PauseOverlay } from "@/components/PauseOverlay";
 import { Toast } from "@/components/Toast";
@@ -40,6 +40,7 @@ import { HelpPanel } from "@/components/HelpPanel";
 
 // Milestone N components
 import { ErrorLimitModal } from "@/components/ErrorLimitModal";
+import { Play, Pause, Settings, Plus } from "lucide-react";
 
 type View =
   | "play"
@@ -408,7 +409,7 @@ export default function HomePage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setView("play")}
-                  className={`px-3 py-2 rounded-lg font-medium transition-colors text-sm ${
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors text-base ${
                     view === "play"
                       ? "bg-blue-600 text-white"
                       : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -418,7 +419,7 @@ export default function HomePage() {
                 </button>
                 <button
                   onClick={() => setView("shop")}
-                  className={`px-3 py-2 rounded-lg font-medium transition-colors text-sm ${
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors text-base ${
                     view === "shop"
                       ? "bg-blue-600 text-white"
                       : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -428,7 +429,7 @@ export default function HomePage() {
                 </button>
                 <button
                   onClick={() => setView("goals")}
-                  className={`px-3 py-2 rounded-lg font-medium transition-colors text-sm ${
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors text-base ${
                     view === "goals"
                       ? "bg-blue-600 text-white"
                       : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -438,7 +439,7 @@ export default function HomePage() {
                 </button>
                 <button
                   onClick={() => setView("stats")}
-                  className={`px-3 py-2 rounded-lg font-medium transition-colors text-sm ${
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors text-base ${
                     view === "stats"
                       ? "bg-blue-600 text-white"
                       : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -448,7 +449,7 @@ export default function HomePage() {
                 </button>
                 <button
                   onClick={() => setView("training")}
-                  className={`px-3 py-2 rounded-lg font-medium transition-colors text-sm ${
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors text-base ${
                     view === "training" || view === "lesson"
                       ? "bg-blue-600 text-white"
                       : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -458,7 +459,7 @@ export default function HomePage() {
                 </button>
                 <button
                   onClick={() => setView("profile")}
-                  className={`px-3 py-2 rounded-lg font-medium transition-colors text-sm ${
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors text-base ${
                     view === "profile"
                       ? "bg-blue-600 text-white"
                       : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -471,7 +472,7 @@ export default function HomePage() {
                     setIsTutorialManual(true); // Manual tutorial
                     setShowTutorial(true);
                   }}
-                  className="px-3 py-2 rounded-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm"
+                  className="px-4 py-2 rounded-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-base"
                   title="Show tutorial"
                 >
                   ❓
@@ -486,46 +487,69 @@ export default function HomePage() {
           {view === "play" && (
             <div className="max-w-6xl mx-auto">
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
-                <TopBar />
-
-                <div className="px-6 pt-4 pb-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowModeSelector(true)}
-                      className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      🎮 New Game
-                    </button>
+                <div className="px-6 pt-6 pb-2 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex justify-between items-center gap-4">
+                    {/* Novo Jogo */}
                     <button
                       onClick={() => setShowNewGameModal(true)}
-                      className="px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
+                      className="flex-1 h-12 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
+                      title="Novo Jogo"
                     >
-                      ⚙️ Advanced Options
+                      <Plus className="w-5 h-5" />
+                      Novo Jogo
                     </button>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {seed && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        Seed: {seed}
-                      </div>
-                    )}
+
+                    {/* Pausar/Retomar */}
+                    <button
+                      onClick={() => dispatch({ type: "TOGGLE_PAUSE" })}
+                      className={`flex-1 h-12 font-semibold rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg ${
+                        paused
+                          ? "bg-green-600 text-white hover:bg-green-700 shadow-green-500/20"
+                          : "bg-orange-500 text-white hover:bg-orange-600 shadow-orange-500/20"
+                      }`}
+                      title={paused ? "Retomar Jogo" : "Pausar Jogo"}
+                    >
+                      {paused ? (
+                        <Play className="w-5 h-5" />
+                      ) : (
+                        <Pause className="w-5 h-5" />
+                      )}
+                      {paused ? "Retomar" : "Pausar"}
+                    </button>
+
+                    {/* Configurações */}
                     <button
                       onClick={() => {
                         dispatch({ type: "PAUSE" });
                         setShowSettingsModal(true);
                       }}
-                      className="px-3 py-1 text-sm rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                      className="flex-1 h-12 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-all shadow-sm flex items-center justify-center gap-2"
                       title="Configurações"
                     >
-                      ⚙️ Settings
+                      <Settings className="w-5 h-5" />
+                      Opções
                     </button>
                   </div>
+
+                  {seed && (
+                    <div
+                      className="text-center mt-3 text-xs text-gray-400 font-mono opacity-60 hover:opacity-100 transition-opacity cursor-help"
+                      title="Seed do jogo atual"
+                    >
+                      #{seed}
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-6">
-                  <div className="flex gap-6 w-full justify-center">
+                  <div className="flex gap-12 w-full justify-center">
                     {/* Main game area */}
-                    <div className="flex flex-col items-center gap-6">
+                    <div className="flex flex-col items-center gap-6 flex-1 max-w-2xl">
+                      {/* Game HUD - Stats above puzzle */}
+                      <div className="w-full">
+                        <GameHUD />
+                      </div>
+
                       {/* Board with pause overlay */}
                       <div className="relative">
                         <SudokuBoard />

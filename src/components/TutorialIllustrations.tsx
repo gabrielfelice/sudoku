@@ -2,6 +2,17 @@
 
 import React from "react";
 import styles from "./TutorialIllustrations.module.css";
+import {
+  Eraser,
+  Undo2,
+  Lightbulb,
+  PauseCircle,
+  Settings,
+  Palette,
+  Volume2,
+  Sparkles,
+  Pencil,
+} from "lucide-react";
 
 interface CellDemoProps {
   value?: number;
@@ -100,14 +111,16 @@ export function NoteModeDemo() {
         <CellDemo />
         <CellDemo />
       </div>
-      <div className={styles.modeToggle}>
-        <span className={styles.modeLabel}>Modo Normal</span>
-        <div className={styles.toggleSwitch}>
-          <div className={styles.toggleActive} />
-        </div>
-        <span className={`${styles.modeLabel} ${styles.active}`}>
-          Modo Notas
-        </span>
+      <div className="flex gap-4 items-center justify-center p-4">
+        <button className="p-3 rounded-lg bg-gray-200 text-gray-800">
+          <Pencil className="w-6 h-6" />
+        </button>
+        <span className="text-sm font-medium">Modo Normal</span>
+        <span className="text-2xl">→</span>
+        <button className="p-3 rounded-lg bg-green-600 text-white ring-2 ring-green-400">
+          <Pencil className="w-6 h-6" />
+        </button>
+        <span className="text-sm font-medium text-green-700">Modo Notas</span>
       </div>
       <p className={styles.demoCaption}>
         Ative o modo notas para adicionar candidatos
@@ -120,7 +133,9 @@ export function HintSystemDemo() {
   return (
     <div className={styles.demoContainer}>
       <div className={styles.hintPanel}>
-        <div className={styles.hintIcon}>💡</div>
+        <div className={styles.hintIcon}>
+          <Lightbulb className="w-8 h-8 text-yellow-500" />
+        </div>
         <div className={styles.hintContent}>
           <h4>Naked Single</h4>
           <p>
@@ -139,7 +154,9 @@ export function PauseModeDemo() {
   return (
     <div className={styles.demoContainer}>
       <div className={styles.pauseOverlay}>
-        <div className={styles.pauseIcon}>⏸️</div>
+        <div className={styles.pauseIcon}>
+          <PauseCircle className="w-12 h-12 text-white" />
+        </div>
         <h3>Jogo Pausado</h3>
         <p>O tabuleiro está oculto</p>
         <button className={styles.resumeButton}>Retomar</button>
@@ -156,7 +173,9 @@ export function SettingsDemo() {
     <div className={styles.demoContainer}>
       <div className={styles.settingsPanel}>
         <div className={styles.settingRow}>
-          <span>🎨 Tema</span>
+          <span className="flex items-center gap-2">
+            <Palette className="w-4 h-4" /> Tema
+          </span>
           <select className={styles.settingSelect}>
             <option>Claro</option>
             <option>Escuro</option>
@@ -164,11 +183,15 @@ export function SettingsDemo() {
           </select>
         </div>
         <div className={styles.settingRow}>
-          <span>🔊 Sons</span>
+          <span className="flex items-center gap-2">
+            <Volume2 className="w-4 h-4" /> Sons
+          </span>
           <div className={styles.settingToggle}>ON</div>
         </div>
         <div className={styles.settingRow}>
-          <span>✨ Destaque de erros</span>
+          <span className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4" /> Destaque de erros
+          </span>
           <div className={styles.settingToggle}>ON</div>
         </div>
       </div>
@@ -183,13 +206,21 @@ export function UndoEraseDemo() {
   return (
     <div className={styles.demoContainer}>
       <div className={styles.actionButtons}>
-        <button className={styles.actionButton}>
-          <span className={styles.buttonIcon}>⌫</span>
-          <span>Apagar</span>
+        <button
+          className={`${styles.actionButton} flex flex-col items-center gap-1 p-2`}
+        >
+          <span className={styles.buttonIcon}>
+            <Eraser className="w-6 h-6" />
+          </span>
+          <span className="text-xs">Borracha</span>
         </button>
-        <button className={styles.actionButton}>
-          <span className={styles.buttonIcon}>↶</span>
-          <span>Desfazer</span>
+        <button
+          className={`${styles.actionButton} flex flex-col items-center gap-1 p-2`}
+        >
+          <span className={styles.buttonIcon}>
+            <Undo2 className="w-6 h-6" />
+          </span>
+          <span className="text-xs">Desfazer</span>
         </button>
       </div>
       <p className={styles.demoCaption}>

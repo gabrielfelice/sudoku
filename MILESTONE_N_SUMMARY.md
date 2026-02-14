@@ -9,11 +9,13 @@ Milestone N implements advanced game rules to refine the Sudoku experience with 
 ### 1. Optional 1-Error Limit
 
 **Configuration:**
+
 - Added `1` as an option to the error limit dropdown in Settings
 - Available options: Unlimited, 1, 3, 5
 - Configurable via Settings → Jogabilidade → "Limite de erros"
 
 **Behavior:**
+
 - When error limit is reached, the game pauses automatically
 - ErrorLimitModal appears with three options (see below)
 - Error limit is enforced in real-time during gameplay
@@ -23,11 +25,13 @@ Milestone N implements advanced game rules to refine the Sudoku experience with 
 When the error limit is reached, users are presented with three choices:
 
 #### Continue
+
 - Keeps playing without restrictions
 - Errors still count but don't block gameplay
 - Useful for learning or casual play
 
 #### Restart
+
 - Resets the current puzzle to initial state
 - Same puzzle, fresh start
 - Timer resets to 00:00
@@ -35,12 +39,14 @@ When the error limit is reached, users are presented with three choices:
 - All progress is cleared
 
 #### New Game
+
 - Generates a completely new puzzle
 - Same difficulty and play mode
 - Timer resets to 00:00
 - Error count resets to 0
 
 **Implementation Details:**
+
 - `errorLimitBehavior` field in `PlayerConfig` tracks chosen behavior
 - Behavior persists until puzzle is completed or manually changed
 - Prevents exploits: changing error limit in settings doesn't reset behavior
@@ -48,6 +54,7 @@ When the error limit is reached, users are presented with three choices:
 ### 3. Expert Hint Limit (Validated)
 
 **Existing Feature - Validated:**
+
 - Expert difficulty puzzles have a configurable hint limit (1-3 hints)
 - Default: 3 hints
 - Configurable via Settings → Jogabilidade → "Limite de dicas (Expert)"
@@ -55,23 +62,27 @@ When the error limit is reached, users are presented with three choices:
 - Progress bar visualizes hint consumption
 
 **UI Location:**
+
 - Settings modal, "Jogabilidade" tab, lines 485-506
 - HelpPanel shows hint counter for Expert difficulty (lines 53-67)
 
 ### 4. Candidate Filtering with Timeout
 
 **Feature:**
+
 - Help item that filters candidate numbers
 - 10-second timeout to prevent UI freezing on complex puzzles
 - Visual loading state while filtering
 
 **Implementation:**
+
 - `candidateFilterTimeout` in `PlayerConfig` (default: 10000ms)
 - `candidateFilterInProgress` state tracks filtering status
 - Promise.race() pattern for timeout enforcement
 - Toast notification on timeout: "Candidate filtering timed out (10s limit)"
 
 **UI:**
+
 - Button shows loading spinner (⏳) while filtering
 - Button and digit selector disabled during filtering
 - Automatic completion or timeout handling
@@ -79,17 +90,20 @@ When the error limit is reached, users are presented with three choices:
 ### 5. Temporal Feedback
 
 **Feature:**
+
 - Subtle visual feedback when user performs actions
 - Helps confirm actions were registered
 - Non-intrusive animation (< 500ms)
 
 **Triggers:**
+
 - Entering a digit (correct or wrong)
 - Clearing a cell
 - Applying a hint
 - Undoing an action
 
 **Implementation:**
+
 - `lastActionTimestamp` in `GameState` tracks last action time
 - CSS animation: `temporalFeedback` (blue glow expanding from cell)
 - Applied to selected cell when action is recent (< 500ms)
@@ -99,6 +113,7 @@ When the error limit is reached, users are presented with three choices:
 ### State Changes
 
 **PlayerConfig:**
+
 ```typescript
 {
   maxErrors: number | null; // Now includes 1 as option
@@ -108,6 +123,7 @@ When the error limit is reached, users are presented with three choices:
 ```
 
 **GameState:**
+
 ```typescript
 {
   lastActionTimestamp: number; // For temporal feedback
@@ -127,6 +143,7 @@ When the error limit is reached, users are presented with three choices:
 ### New Components
 
 **ErrorLimitModal.tsx:**
+
 - Displays when error limit is reached
 - Three prominent action buttons
 - Visual error count display
@@ -135,28 +152,34 @@ When the error limit is reached, users are presented with three choices:
 ### Modified Components
 
 **SettingsModal.tsx:**
+
 - Added `1` to error limit dropdown
 
 **HelpPanel.tsx:**
+
 - Enhanced candidate filter with timeout logic
 - Loading state and disabled state during filtering
 - Toast notification on timeout
 
 **SudokuCell.tsx:**
+
 - Added temporal feedback animation class
 - Checks `lastActionTimestamp` to apply animation
 
 **page.tsx:**
+
 - Integrated ErrorLimitModal
 - Auto-generates new game when "new-game" behavior is selected
 
 **reducer.ts:**
+
 - Error limit enforcement on wrong answers
 - Pauses game when limit reached (if no behavior set)
 - Temporal feedback tracking on actions
 - New action handlers for all Milestone N features
 
 **globals.css:**
+
 - Added `temporalFeedback` keyframe animation
 - Blue glow effect expanding from cell
 
@@ -223,9 +246,11 @@ When the error limit is reached, users are presented with three choices:
 ## Files Modified
 
 ### Created:
+
 - `src/components/ErrorLimitModal.tsx`
 
 ### Modified:
+
 - `src/state/types.ts` - Added new state fields
 - `src/state/reducer.ts` - Added error limit logic and new actions
 - `src/components/SettingsModal.tsx` - Added 1-error option

@@ -43,28 +43,34 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     title: "Modo de Notas",
     description:
-      "Ative o modo de notas para adicionar pequenos números candidatos às células. Isso ajuda a rastrear possibilidades.",
+      "Clique no ícone de lápis para ativar o modo de notas. Isso permite adicionar pequenos números candidatos para rastrear possibilidades.",
     illustration: <NoteModeDemo />,
     target: "note-button",
   },
   {
     title: "Apagar e Desfazer",
     description:
-      "Use a borracha para limpar uma célula, ou desfazer para reverter seu último movimento.",
+      "Use o botão de borracha para limpar uma célula, ou o botão de desfazer para reverter seu último movimento.",
     illustration: <UndoEraseDemo />,
     target: "erase-button",
   },
   {
     title: "Obter Dicas",
     description:
-      "Travado? Use o botão de dica para obter uma sugestão lógica com explicação detalhada.",
+      "Travado? Use o ícone de lâmpada para obter uma sugestão lógica com explicação passo a passo.",
     illustration: <HintSystemDemo />,
     target: "hint-button",
   },
   {
+    title: "Painel de Jogo",
+    description:
+      "Acompanhe seu tempo, erros e dificuldade no painel acima do tabuleiro. Fique de olho no limite de erros!",
+    target: "game-hud",
+  },
+  {
     title: "Pausar e Retomar",
     description:
-      "Precisa de uma pausa? Pause o jogo para ocultar o tabuleiro e pausar o cronômetro.",
+      "Precisa de uma pausa? Use o botão de pausa no canto superior para ocultar o tabuleiro e parar o tempo.",
     illustration: <PauseModeDemo />,
     target: "pause-button",
   },

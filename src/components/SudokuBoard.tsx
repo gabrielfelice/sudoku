@@ -5,7 +5,7 @@ import { SudokuCell } from "./SudokuCell";
 export function SudokuBoard() {
   return (
     <div
-      className="inline-grid grid-cols-9 gap-0 border-4 border-gray-400"
+      className="inline-grid grid-cols-9 gap-0 border-4 border-black dark:border-gray-300"
       role="grid"
       aria-label="Sudoku board"
     >

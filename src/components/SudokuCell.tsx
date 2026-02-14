@@ -106,7 +106,7 @@ export function SudokuCell({ idx }: SudokuCellProps) {
     <button
       onClick={handleClick}
       style={combinedStyle}
-      className={`w-12 h-12 border border-gray-400 flex items-center justify-center relative hover:bg-blue-100 transition-colors focus:outline-none ${
+      className={`w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 border border-gray-400 flex items-center justify-center relative hover:bg-blue-100 transition-colors focus:outline-none ${
         isRecentlyModified ? "temporal-feedback" : ""
       }`}
       aria-label={`Cell ${idx + 1}, ${cellValue !== 0 ? `value ${cellValue}` : "empty"}`}
@@ -115,7 +115,7 @@ export function SudokuCell({ idx }: SudokuCellProps) {
       {/* Locked indicator */}
       {config.showLockIcon && cellMeta.isLocked && !cellMeta.isGiven && (
         <div
-          className="absolute top-0.5 right-0.5 text-[8px] text-blue-400 opacity-60"
+          className="absolute top-0.5 right-0.5 text-[8px] sm:text-[9px] lg:text-[10px] text-blue-400 opacity-60"
           title="Célula travada (resposta correta)"
         >
           🔒
@@ -123,7 +123,7 @@ export function SudokuCell({ idx }: SudokuCellProps) {
       )}
 
       {cellValue !== 0 ? (
-        <span className="text-2xl" style={textStyle}>
+        <span className="text-2xl sm:text-3xl lg:text-4xl" style={textStyle}>
           {cellValue}
         </span>
       ) : (
@@ -135,7 +135,7 @@ export function SudokuCell({ idx }: SudokuCellProps) {
             return (
               <div
                 key={d}
-                className="flex items-center justify-center text-[8px] text-gray-500"
+                className="flex items-center justify-center text-[8px] sm:text-[9px] lg:text-[10px] text-gray-500 leading-none"
               >
                 {isPresent && (
                   <span className={isBold ? "font-bold text-purple-700" : ""}>
