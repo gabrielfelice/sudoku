@@ -281,41 +281,37 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <div className="mb-6 flex gap-2 border-b overflow-x-auto">
                 <button
                   onClick={() => setActiveTab("config")}
-                  className={`px-4 py-2 font-medium whitespace-nowrap ${
-                    activeTab === "config"
+                  className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === "config"
                       ? "border-b-2 border-blue-500 text-blue-600"
                       : "text-gray-600"
-                  }`}
+                    }`}
                 >
                   Jogabilidade
                 </button>
                 <button
                   onClick={() => setActiveTab("appearance")}
-                  className={`px-4 py-2 font-medium whitespace-nowrap ${
-                    activeTab === "appearance"
+                  className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === "appearance"
                       ? "border-b-2 border-blue-500 text-blue-600"
                       : "text-gray-600"
-                  }`}
+                    }`}
                 >
                   Aparência
                 </button>
                 <button
                   onClick={() => setActiveTab("theme")}
-                  className={`px-4 py-2 font-medium whitespace-nowrap ${
-                    activeTab === "theme"
+                  className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === "theme"
                       ? "border-b-2 border-blue-500 text-blue-600"
                       : "text-gray-600"
-                  }`}
+                    }`}
                 >
                   Tema
                 </button>
                 <button
                   onClick={() => setActiveTab("avatar")}
-                  className={`px-4 py-2 font-medium whitespace-nowrap ${
-                    activeTab === "avatar"
+                  className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === "avatar"
                       ? "border-b-2 border-blue-500 text-blue-600"
                       : "text-gray-600"
-                  }`}
+                    }`}
                 >
                   Avatar
                 </button>
@@ -752,11 +748,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                           <button
                             key={key}
                             onClick={() => handlePresetChange(key)}
-                            className={`rounded px-4 py-2 ${
-                              selectedPreset === key
+                            className={`rounded px-4 py-2 ${selectedPreset === key
                                 ? "bg-blue-500 text-white"
                                 : "bg-gray-200 hover:bg-gray-300"
-                            }`}
+                              }`}
                           >
                             {key === "default" && "Padrão"}
                             {key === "high-contrast" && "Alto Contraste"}
@@ -930,11 +925,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                           <button
                             key={avatar.id}
                             onClick={() => handleAvatarSelect(avatar.id)}
-                            className={`text-4xl p-3 rounded-lg border-2 hover:scale-110 transition-transform ${
-                              draftAvatar === avatar.id
+                            className={`text-4xl p-3 rounded-lg border-2 hover:scale-110 transition-transform ${draftAvatar === avatar.id
                                 ? "border-blue-500 bg-blue-50"
                                 : "border-gray-200 hover:border-gray-300"
-                            }`}
+                              }`}
                             title={avatar.id}
                           >
                             {avatar.emoji}
@@ -986,13 +980,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                     owned && handleAvatarSelect(avatar.id)
                                   }
                                   disabled={owned ? undefined : true}
-                                  className={`text-2xl p-2 rounded border ${
-                                    owned
+                                  className={`text-2xl p-2 rounded border ${owned
                                       ? draftAvatar === avatar.id
                                         ? "border-blue-500 bg-blue-50"
                                         : "border-gray-200 hover:border-gray-300 hover:scale-110 transition-transform"
                                       : "border-gray-200 opacity-50 cursor-not-allowed"
-                                  }`}
+                                    }`}
                                 >
                                   {owned ? avatar.emoji : "🔒"}
                                 </button>
@@ -1024,7 +1017,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </button>
           <button
             onClick={handleSave}
-            disabled={contrastValidation && !contrastValidation.isValid}
+            disabled={!!(contrastValidation && !contrastValidation.isValid)}
             className="rounded bg-blue-500 px-6 py-2 text-white hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             Salvar Personalização
