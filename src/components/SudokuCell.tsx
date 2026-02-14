@@ -106,7 +106,7 @@ export function SudokuCell({ idx }: SudokuCellProps) {
       role="gridcell"
     >
       {/* Locked indicator */}
-      {cellMeta.isLocked && !cellMeta.isGiven && (
+      {config.showLockIcon && cellMeta.isLocked && !cellMeta.isGiven && (
         <div
           className="absolute top-0.5 right-0.5 text-[8px] text-blue-400 opacity-60"
           title="Célula travada (resposta correta)"

@@ -71,6 +71,7 @@ export default function HomePage() {
   const [showNewGameModal, setShowNewGameModal] = useState(false);
   const [showModeSelector, setShowModeSelector] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [isTutorialManual, setIsTutorialManual] = useState(false); // NEW: Track manual tutorial
   const [showVictory, setShowVictory] = useState(false);
   const [victoryBadges, setVictoryBadges] = useState<Badge[]>([]);
   const [victoryCoins, setVictoryCoins] = useState(0);
@@ -117,6 +118,7 @@ export default function HomePage() {
   // Check for tutorial on first load
   useEffect(() => {
     if (!profile.tutorialCompleted && isInitialized) {
+      setIsTutorialManual(false); // Auto-tutorial
       setShowTutorial(true);
     }
   }, [profile.tutorialCompleted, isInitialized]);
@@ -127,10 +129,11 @@ export default function HomePage() {
     if (saved) {
       setShowContinueModal(true);
     } else {
-      // No saved game, start fresh with generated puzzle
-      handleStartNewGame();
+      // No saved game, show mode selector instead of auto-starting
+      setShowModeSelector(true);
     }
-  }, [dispatch]);
+    setIsInitialized(true);
+  }, []);
 
   // Auto-save game state whenever it changes (debounced)
   useEffect(() => {
@@ -296,6 +299,7 @@ export default function HomePage() {
         <TutorialTour
           onComplete={() => setShowTutorial(false)}
           onSkip={() => setShowTutorial(false)}
+          isManual={isTutorialManual}
         />
       )}
 
@@ -308,6 +312,7 @@ export default function HomePage() {
           seed={seed}
           newBadges={victoryBadges}
           coinsEarned={victoryCoins}
+          playMode={gameState.playMode}
           onPlayAgain={handleVictoryPlayAgain}
           onClose={handleVictoryClose}
         />
@@ -357,7 +362,7 @@ export default function HomePage() {
       )}
 
       {/* Keyboard controller */}
-      {view === "play" && <KeyboardController />}
+      {(view === "play" || view === "lesson") && <KeyboardController />}
 
       {/* Main UI */}
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800">
@@ -439,7 +444,10 @@ export default function HomePage() {
                   Profile
                 </button>
                 <button
-                  onClick={() => setShowTutorial(true)}
+                  onClick={() => {
+                    setIsTutorialManual(true); // Manual tutorial
+                    setShowTutorial(true);
+                  }}
                   className="px-3 py-2 rounded-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm"
                   title="Show tutorial"
                 >
@@ -479,7 +487,10 @@ export default function HomePage() {
                       </div>
                     )}
                     <button
-                      onClick={() => setShowSettingsModal(true)}
+                      onClick={() => {
+                        dispatch({ type: "PAUSE" });
+                        setShowSettingsModal(true);
+                      }}
                       className="px-3 py-1 text-sm rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                       title="Configurações"
                     >

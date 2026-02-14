@@ -86,6 +86,7 @@ export interface PlayerConfig {
   soundEnabled: boolean;
   helpEnabled: boolean; // NEW: Enable/disable help items
   expertHintLimit: number; // NEW: Max hints for expert (default 3, can reduce)
+  showLockIcon: boolean; // NEW: Show lock icon on locked cells (default false)
 }
 
 export interface ThemeConfig {
@@ -195,6 +196,7 @@ export function createDefaultConfig(): PlayerConfig {
     soundEnabled: true,
     helpEnabled: true, // NEW: Help enabled by default
     expertHintLimit: 3, // NEW: Expert max 3 hints
+    showLockIcon: false, // NEW: Lock icon disabled by default
   };
 }
 

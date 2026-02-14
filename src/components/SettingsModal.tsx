@@ -373,6 +373,22 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <option value="3">3</option>
                     </select>
                   </div>
+
+                  {/* Milestone K: Lock Icon Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">Mostrar ícone de cadeado</h3>
+                      <p className="text-sm text-gray-600">
+                        Exibir ícone 🔒 em células travadas
+                      </p>
+                    </div>
+                    <Switch
+                      checked={draftConfig.showLockIcon}
+                      onChange={(checked) =>
+                        handleConfigChange("showLockIcon", checked)
+                      }
+                    />
+                  </div>
                 </div>
               )}
 

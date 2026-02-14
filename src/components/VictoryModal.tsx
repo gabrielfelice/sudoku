@@ -12,6 +12,7 @@ interface VictoryModalProps {
   coinsEarned: number;
   onPlayAgain: () => void;
   onClose: () => void;
+  playMode?: "normal" | "zen" | "challenge"; // NEW: Milestone K
 }
 
 function formatTime(ms: number): string {
@@ -30,12 +31,26 @@ export default function VictoryModal({
   coinsEarned,
   onPlayAgain,
   onClose,
+  playMode = "normal", // NEW: Default to normal
 }: VictoryModalProps) {
   const handleShareSeed = () => {
     if (seed) {
       navigator.clipboard.writeText(`Sudoku seed: ${seed}`);
       alert("Seed copied to clipboard!");
     }
+  };
+
+  // Mode-specific display
+  const modeEmoji = {
+    normal: "🎯",
+    zen: "🧘",
+    challenge: "⚡",
+  };
+
+  const modeLabel = {
+    normal: "Normal",
+    zen: "Zen",
+    challenge: "Challenge",
   };
 
   return (
@@ -45,17 +60,27 @@ export default function VictoryModal({
           <div className={styles.trophy}>🏆</div>
           <h2>Congratulations!</h2>
           <p>You solved the puzzle!</p>
+          {/* Mode Badge */}
+          <div className="mt-2 text-sm font-semibold">
+            {modeEmoji[playMode]} {modeLabel[playMode]} Mode
+          </div>
         </div>
 
         <div className={styles.stats}>
-          <div className={styles.statItem}>
-            <div className={styles.statLabel}>Time</div>
-            <div className={styles.statValue}>{formatTime(timeMs)}</div>
-          </div>
-          <div className={styles.statItem}>
-            <div className={styles.statLabel}>Mistakes</div>
-            <div className={styles.statValue}>{mistakes}</div>
-          </div>
+          {/* Show time only if not Zen mode */}
+          {playMode !== "zen" && (
+            <div className={styles.statItem}>
+              <div className={styles.statLabel}>Time</div>
+              <div className={styles.statValue}>{formatTime(timeMs)}</div>
+            </div>
+          )}
+          {/* Show mistakes only if not Zen mode */}
+          {playMode !== "zen" && (
+            <div className={styles.statItem}>
+              <div className={styles.statLabel}>Mistakes</div>
+              <div className={styles.statValue}>{mistakes}</div>
+            </div>
+          )}
           <div className={styles.statItem}>
             <div className={styles.statLabel}>Difficulty</div>
             <div className={styles.statValue}>

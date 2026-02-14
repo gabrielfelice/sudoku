@@ -267,11 +267,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             previousMeta,
           );
 
+          // Zen mode: don't count mistakes
+          const mistakeIncrement = state.playMode === "zen" ? 0 : 1;
+
           return {
             ...state,
             values: newValues,
             meta: newMeta,
-            mistakes: state.mistakes + 1,
+            mistakes: state.mistakes + mistakeIncrement,
             hint: null, // fechar dica ao errar
             history,
             cellHistory,
@@ -468,6 +471,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case "TICK_TIMER": {
+      // Zen mode: timer doesn't run
+      if (state.playMode === "zen") return state;
       if (!state.timer.running || state.paused) return state;
 
       const delta = action.now - state.timer.lastTick;

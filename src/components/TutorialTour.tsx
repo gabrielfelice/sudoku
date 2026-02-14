@@ -85,11 +85,13 @@ const TUTORIAL_STEPS: TutorialStep[] = [
 interface TutorialTourProps {
   onComplete: () => void;
   onSkip: () => void;
+  isManual?: boolean; // NEW: Milestone K - hide "don't show again" when manual
 }
 
 export default function TutorialTour({
   onComplete,
   onSkip,
+  isManual = false, // NEW: Default to false (auto-tutorial)
 }: TutorialTourProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [dontShowAgain, setDontShowAgain] = useState(false);
@@ -114,14 +116,18 @@ export default function TutorialTour({
   };
 
   const handleSkip = () => {
-    if (dontShowAgain) {
+    // Only mark as complete if user checked "don't show again" and not manual
+    if (dontShowAgain && !isManual) {
       completeTutorial();
     }
     onSkip();
   };
 
   const handleComplete = () => {
-    completeTutorial();
+    // Always mark as complete when finishing tutorial (unless manual)
+    if (!isManual) {
+      completeTutorial();
+    }
     onComplete();
   };
 
@@ -161,14 +167,17 @@ export default function TutorialTour({
           </div>
 
           <div className={styles.actions}>
-            <label className={styles.checkbox}>
-              <input
-                type="checkbox"
-                checked={dontShowAgain}
-                onChange={(e) => setDontShowAgain(e.target.checked)}
-              />
-              Não mostrar novamente
-            </label>
+            {/* Hide "don't show again" when manually opened */}
+            {!isManual && (
+              <label className={styles.checkbox}>
+                <input
+                  type="checkbox"
+                  checked={dontShowAgain}
+                  onChange={(e) => setDontShowAgain(e.target.checked)}
+                />
+                Não mostrar novamente
+              </label>
+            )}
 
             <div className={styles.buttons}>
               {!isFirstStep && (
