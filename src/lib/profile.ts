@@ -62,7 +62,7 @@ export interface PlayerProfile {
   coins: number;
   coinLedger: CoinTransaction[];
   inventory: {
-    helpItems: string[]; // IDs of purchased help items
+    helpItems: Record<string, number>; // Milestone O: itemId -> quantity (consumable)
     themes: string[]; // IDs of purchased themes
     avatarPacks: string[]; // IDs of purchased avatar packs (Milestone M)
   };
@@ -100,7 +100,7 @@ export interface ProfileStorage {
 }
 
 const STORAGE_KEY = "sudoku_profile";
-const CURRENT_SCHEMA_VERSION = 3; // Updated for Milestone M
+const CURRENT_SCHEMA_VERSION = 4; // Milestone O: Consumable help items
 
 export function createDefaultDifficultyStats(): DifficultyStats {
   return {
@@ -124,7 +124,7 @@ export function createDefaultProfile(): PlayerProfile {
     coins: 100, // Starting balance
     coinLedger: [],
     inventory: {
-      helpItems: [],
+      helpItems: {}, // Milestone O: Empty quantities
       themes: [],
       avatarPacks: [], // Milestone M
     },
@@ -190,10 +190,11 @@ export function saveProfile(profile: PlayerProfile): void {
 }
 
 function migrateProfile(data: ProfileStorage): PlayerProfile {
+  let profile = data.profile as any;
+
   // Milestone M: Migrate to schema 3 (add avatar and avatarPacks)
   if (data.schemaVersion < 3) {
-    const profile = data.profile as any;
-    return {
+    profile = {
       ...profile,
       avatar: profile.avatar || "smile",
       inventory: {
@@ -203,11 +204,28 @@ function migrateProfile(data: ProfileStorage): PlayerProfile {
     };
   }
 
-  // For future migrations
-  console.warn(
-    `Migrating profile from schema ${data.schemaVersion} to ${CURRENT_SCHEMA_VERSION}`,
-  );
-  return createDefaultProfile();
+  // Milestone O: Migrate to schema 4 (consumable help items)
+  if (data.schemaVersion < 4) {
+    const oldHelpItems = profile.inventory?.helpItems || [];
+    const newHelpItems: Record<string, number> = {};
+
+    // Convert each owned item to 5x quantity as compensation
+    if (Array.isArray(oldHelpItems)) {
+      oldHelpItems.forEach((itemId: string) => {
+        newHelpItems[itemId] = 5;
+      });
+    }
+
+    profile = {
+      ...profile,
+      inventory: {
+        ...profile.inventory,
+        helpItems: newHelpItems,
+      },
+    };
+  }
+
+  return profile;
 }
 
 export function recordGameStart(

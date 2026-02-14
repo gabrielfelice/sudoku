@@ -11,6 +11,7 @@ export function HelpPanel() {
   const difficulty = useGameStore((s) => s.difficulty);
   const hintsUsedThisPuzzle = useGameStore((s) => s.hintsUsedThisPuzzle);
   const profile = useProfileStore((s) => s.profile);
+  const useHelpItem = useProfileStore((s) => s.useHelpItem);
 
   const [showDigitSelector, setShowDigitSelector] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -20,18 +21,36 @@ export function HelpPanel() {
     setIsMounted(true);
   }, []);
 
-  const hasFilterItem =
-    profile.inventory.helpItems.includes("candidate_filter") ||
-    profile.inventory.helpItems.includes("candidate_filter_premium");
-  const hasCleanItem =
-    profile.inventory.helpItems.includes("clean_notes") ||
-    profile.inventory.helpItems.includes("clean_notes_premium");
+  // Milestone O: Check quantities instead of ownership
+  const filterQty =
+    (profile.inventory.helpItems["candidate_filter"] || 0) +
+    (profile.inventory.helpItems["candidate_filter_premium"] || 0);
+  const cleanQty =
+    (profile.inventory.helpItems["clean_notes"] || 0) +
+    (profile.inventory.helpItems["clean_notes_premium"] || 0);
+
+  const hasFilterItem = filterQty > 0;
+  const hasCleanItem = cleanQty > 0;
 
   if (!config.helpEnabled) {
     return null; // Hide panel when help is disabled
   }
 
   const handleCandidateFilter = async (digit: Digit) => {
+    // Milestone O: Use consumable item
+    const itemId = profile.inventory.helpItems["candidate_filter_premium"]
+      ? "candidate_filter_premium"
+      : "candidate_filter";
+
+    if (!useHelpItem(itemId)) {
+      dispatch({
+        type: "SET_TOAST",
+        message: "No candidate filter items remaining!",
+        toastType: "error",
+      });
+      return;
+    }
+
     dispatch({ type: "START_CANDIDATE_FILTER" });
     setShowDigitSelector(false);
 
@@ -70,6 +89,20 @@ export function HelpPanel() {
   };
 
   const handleCleanNotes = () => {
+    // Milestone O: Use consumable item
+    const itemId = profile.inventory.helpItems["clean_notes_premium"]
+      ? "clean_notes_premium"
+      : "clean_notes";
+
+    if (!useHelpItem(itemId)) {
+      dispatch({
+        type: "SET_TOAST",
+        message: "No clean notes items remaining!",
+        toastType: "error",
+      });
+      return;
+    }
+
     dispatch({ type: "CLEAN_INVALID_NOTES" });
   };
 
@@ -104,20 +137,28 @@ export function HelpPanel() {
         <div className="mb-3">
           <button
             onClick={() => setShowDigitSelector(!showDigitSelector)}
-            disabled={useGameStore((s) => s.candidateFilterInProgress)}
-            className="w-full bg-purple-500 text-white py-2 px-4 rounded font-semibold hover:bg-purple-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            disabled={
+              useGameStore((s) => s.candidateFilterInProgress) ||
+              filterQty === 0
+            }
+            className="w-full bg-purple-500 text-white py-2 px-4 rounded font-semibold hover:bg-purple-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-between"
           >
-            {useGameStore((s) => s.candidateFilterInProgress) ? (
-              <>
-                <span className="animate-spin">⏳</span>
-                <span>Filtering...</span>
-              </>
-            ) : (
-              <>
-                <span>🔍</span>
-                <span>Candidate Filter</span>
-              </>
-            )}
+            <span className="flex items-center gap-2">
+              {useGameStore((s) => s.candidateFilterInProgress) ? (
+                <>
+                  <span className="animate-spin">⏳</span>
+                  <span>Filtering...</span>
+                </>
+              ) : (
+                <>
+                  <span>🔍</span>
+                  <span>Candidate Filter</span>
+                </>
+              )}
+            </span>
+            <span className="text-sm bg-purple-600 px-2 py-0.5 rounded">
+              {filterQty}x
+            </span>
           </button>
           {showDigitSelector && (
             <div className="mt-2 grid grid-cols-3 gap-2">
@@ -140,9 +181,16 @@ export function HelpPanel() {
       {isMounted && hasCleanItem && (
         <button
           onClick={handleCleanNotes}
-          className="w-full bg-green-500 text-white py-2 px-4 rounded font-semibold hover:bg-green-600 transition-colors"
+          disabled={cleanQty === 0}
+          className="w-full bg-green-500 text-white py-2 px-4 rounded font-semibold hover:bg-green-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-between"
         >
-          ✨ Clean Invalid Notes
+          <span className="flex items-center gap-2">
+            <span>✨</span>
+            <span>Clean Invalid Notes</span>
+          </span>
+          <span className="text-sm bg-green-600 px-2 py-0.5 rounded">
+            {cleanQty}x
+          </span>
         </button>
       )}
 

@@ -5,42 +5,57 @@ export interface ShopItem {
   basePrice: number;
   category: "help" | "theme" | "avatar"; // Milestone M: Added avatar
   tier?: "basic" | "premium";
+  isConsumable?: boolean; // Milestone O: Single-use items
+}
+
+// Milestone O: Package bundles
+export interface ShopPackage {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  items: Array<{ itemId: string; quantity: number }>;
+  savings: number; // Percentage saved
 }
 
 export const SHOP_CATALOG: ShopItem[] = [
-  // Help Items
+  // Help Items (Milestone O: Consumable with balanced pricing)
   {
     id: "candidate_filter",
     name: "Candidate Filter",
     description:
       "Highlight all cells where a selected number is a valid candidate",
-    basePrice: 15,
+    basePrice: 3, // Per use
     category: "help",
     tier: "basic",
+    isConsumable: true,
   },
   {
     id: "clean_notes",
     name: "Clean Invalid Notes",
     description: "Remove all notes that are no longer valid candidates",
-    basePrice: 20,
+    basePrice: 4, // Per use
     category: "help",
     tier: "basic",
+    isConsumable: true,
   },
   {
     id: "candidate_filter_premium",
     name: "Candidate Filter Pro",
     description: "Advanced candidate highlighting with visual annotations",
-    basePrice: 30,
+    basePrice: 5, // Per use
     category: "help",
     tier: "premium",
+    isConsumable: true,
   },
   {
     id: "clean_notes_premium",
     name: "Smart Note Cleanup",
     description: "Intelligent note cleanup with undo support",
-    basePrice: 35,
+    basePrice: 6, // Per use
     category: "help",
     tier: "premium",
+    isConsumable: true,
   },
 
   // Themes
@@ -104,23 +119,75 @@ export const SHOP_CATALOG: ShopItem[] = [
   },
 ];
 
-// Difficulty multipliers for help items
+// Milestone O: Package Bundles
+export const SHOP_PACKAGES: ShopPackage[] = [
+  {
+    id: "starter_pack",
+    name: "Starter Pack",
+    description:
+      "Perfect for beginners - get started with essential help items",
+    price: 25,
+    items: [
+      { itemId: "candidate_filter", quantity: 3 },
+      { itemId: "clean_notes", quantity: 2 },
+    ],
+    savings: 30, // 35 coins value for 25 coins
+  },
+  {
+    id: "power_pack",
+    name: "Power Pack",
+    description: "Boost your solving with a mix of basic and premium items",
+    price: 60,
+    items: [
+      { itemId: "candidate_filter", quantity: 5 },
+      { itemId: "clean_notes", quantity: 5 },
+      { itemId: "candidate_filter_premium", quantity: 3 },
+    ],
+    savings: 25, // 80 coins value for 60 coins
+  },
+  {
+    id: "expert_bundle",
+    name: "Expert Bundle",
+    description: "Premium items for expert solvers",
+    price: 100,
+    items: [
+      { itemId: "candidate_filter_premium", quantity: 5 },
+      { itemId: "clean_notes_premium", quantity: 5 },
+    ],
+    savings: 33, // 150 coins value for 100 coins
+  },
+  {
+    id: "mega_pack",
+    name: "Mega Pack",
+    description: "Ultimate value - 10x of every help item!",
+    price: 200,
+    items: [
+      { itemId: "candidate_filter", quantity: 10 },
+      { itemId: "clean_notes", quantity: 10 },
+      { itemId: "candidate_filter_premium", quantity: 10 },
+      { itemId: "clean_notes_premium", quantity: 10 },
+    ],
+    savings: 40, // 340 coins value for 200 coins
+  },
+];
+
+// Milestone O: Difficulty multipliers for consumable help items
 const DIFFICULTY_MULTIPLIERS: Record<
   "easy" | "medium" | "hard" | "expert",
   number
 > = {
-  easy: 1.0,
-  medium: 1.2,
-  hard: 1.5,
-  expert: 2.0, // Expert items cost double
+  easy: 1.0, // 3-6 coins
+  medium: 1.33, // 4-8 coins
+  hard: 1.67, // 5-10 coins
+  expert: 2.33, // 7-14 coins (rounded)
 };
 
 export function getItemPrice(
   item: ShopItem,
   difficulty: "easy" | "medium" | "hard" | "expert",
 ): number {
-  if (item.category === "help") {
-    return Math.floor(item.basePrice * DIFFICULTY_MULTIPLIERS[difficulty]);
+  if (item.category === "help" && item.isConsumable) {
+    return Math.round(item.basePrice * DIFFICULTY_MULTIPLIERS[difficulty]);
   }
   return item.basePrice;
 }
@@ -129,13 +196,23 @@ export function canPurchase(
   item: ShopItem,
   coins: number,
   difficulty: "easy" | "medium" | "hard" | "expert",
-  inventory: string[],
+  inventory: Record<string, number>, // Milestone O: Changed from string[]
 ): { canPurchase: boolean; reason?: string } {
-  if (inventory.includes(item.id)) {
+  const price = getItemPrice(item, difficulty);
+
+  // Milestone O: For consumables, check quantity limit
+  if (item.isConsumable && item.category === "help") {
+    const currentQuantity = inventory[item.id] || 0;
+    if (currentQuantity >= 99) {
+      return { canPurchase: false, reason: "Max quantity (99)" };
+    }
+  }
+
+  // For non-consumables, check if already owned
+  if (!item.isConsumable && inventory[item.id] && inventory[item.id] > 0) {
     return { canPurchase: false, reason: "Already owned" };
   }
 
-  const price = getItemPrice(item, difficulty);
   if (coins < price) {
     return { canPurchase: false, reason: "Insufficient coins" };
   }
@@ -205,4 +282,47 @@ export const SHOP_THEME_CONFIGS: Record<string, ThemeConfig> = {
 
 export function getThemeConfig(themeId: string): ThemeConfig | undefined {
   return SHOP_THEME_CONFIGS[themeId];
+}
+
+// Milestone O: Package helper functions
+export function canPurchasePackage(
+  pkg: ShopPackage,
+  coins: number,
+  inventory: Record<string, number>,
+): { canPurchase: boolean; reason?: string } {
+  if (coins < pkg.price) {
+    return { canPurchase: false, reason: "Insufficient coins" };
+  }
+
+  // Check if any item would exceed max quantity (99)
+  for (const item of pkg.items) {
+    const currentQuantity = inventory[item.itemId] || 0;
+    if (currentQuantity + item.quantity > 99) {
+      return {
+        canPurchase: false,
+        reason: `Would exceed max quantity`,
+      };
+    }
+  }
+
+  return { canPurchase: true };
+}
+
+export function getPackageById(id: string): ShopPackage | undefined {
+  return SHOP_PACKAGES.find((pkg) => pkg.id === id);
+}
+
+export function calculatePackageValue(
+  pkg: ShopPackage,
+  difficulty: "easy" | "medium" | "hard" | "expert",
+): number {
+  let totalValue = 0;
+  for (const item of pkg.items) {
+    const shopItem = getItemById(item.itemId);
+    if (shopItem) {
+      const itemPrice = getItemPrice(shopItem, difficulty);
+      totalValue += itemPrice * item.quantity;
+    }
+  }
+  return totalValue;
 }

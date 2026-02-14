@@ -36,6 +36,12 @@ interface ProfileStore {
     price: number,
     category: "helpItems" | "themes" | "avatarPacks", // Milestone M: Added avatarPacks
   ) => boolean;
+  purchasePackage: (
+    packageId: string,
+    price: number,
+    items: Array<{ itemId: string; quantity: number }>,
+  ) => boolean; // Milestone O
+  useHelpItem: (itemId: string) => boolean; // Milestone O
   setAvatar: (avatarId: string) => void; // Milestone M
   addGoal: (
     type: Goal["type"],
@@ -143,11 +149,87 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       return false;
     }
 
+    // Milestone O: Handle consumable items with quantities
+    let updatedInventory = { ...result.profile.inventory };
+
+    if (category === "helpItems") {
+      // Add 1 to quantity (consumable)
+      const currentQuantity = updatedInventory.helpItems[itemId] || 0;
+      updatedInventory.helpItems = {
+        ...updatedInventory.helpItems,
+        [itemId]: currentQuantity + 1,
+      };
+    } else {
+      // Permanent items (themes, avatarPacks)
+      updatedInventory = {
+        ...updatedInventory,
+        [category]: [...updatedInventory[category], itemId],
+      };
+    }
+
+    const updated = {
+      ...result.profile,
+      inventory: updatedInventory,
+    };
+
+    saveProfile(updated);
+    set({ profile: updated });
+    return true;
+  },
+
+  // Milestone O: Purchase package
+  purchasePackage: (
+    packageId: string,
+    price: number,
+    items: Array<{ itemId: string; quantity: number }>,
+  ) => {
+    const result = spendCoins(
+      get().profile,
+      price,
+      `Purchased package ${packageId}`,
+    );
+
+    if (!result.success) {
+      return false;
+    }
+
+    // Add all items from package
+    const updatedHelpItems = { ...result.profile.inventory.helpItems };
+    items.forEach((item) => {
+      const currentQuantity = updatedHelpItems[item.itemId] || 0;
+      updatedHelpItems[item.itemId] = currentQuantity + item.quantity;
+    });
+
     const updated = {
       ...result.profile,
       inventory: {
         ...result.profile.inventory,
-        [category]: [...result.profile.inventory[category], itemId],
+        helpItems: updatedHelpItems,
+      },
+    };
+
+    saveProfile(updated);
+    set({ profile: updated });
+    return true;
+  },
+
+  // Milestone O: Use help item (decrement quantity)
+  useHelpItem: (itemId: string) => {
+    const profile = get().profile;
+    const currentQuantity = profile.inventory.helpItems[itemId] || 0;
+
+    if (currentQuantity <= 0) {
+      return false;
+    }
+
+    const updated = {
+      ...profile,
+      inventory: {
+        ...profile.inventory,
+        helpItems: {
+          ...profile.inventory.helpItems,
+          [itemId]: currentQuantity - 1,
+        },
       },
     };
 
